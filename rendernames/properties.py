@@ -1,0 +1,238 @@
+# ============================================================================
+# RenderNames - Properties
+# ============================================================================
+# All property definitions for the extension
+# Properties are stored per-scene and automatically saved with .blend files
+
+import bpy
+from bpy.props import (
+    StringProperty,
+    BoolProperty,
+    IntProperty,
+    EnumProperty,
+    CollectionProperty,
+)
+from bpy.types import PropertyGroup
+
+
+# ============================================================================
+# Property Definitions
+# ============================================================================
+
+class RENDERNAMES_PresetItem(PropertyGroup):
+    """Individual preset entry for the presets list."""
+    name: StringProperty(
+        name="Preset Name",
+        default="",
+    )
+
+
+class RENDERNAMES_Properties(PropertyGroup):
+    """Main property group for RenderNames settings."""
+    
+    # -------------------------------------------------------------------------
+    # Master Toggle
+    # -------------------------------------------------------------------------
+    enabled: BoolProperty(
+        name="Enable RenderNames",
+        description="Enable smart render naming (disabling uses Blender's default path)",
+        default=True,
+    )
+    
+    # -------------------------------------------------------------------------
+    # Template System
+    # -------------------------------------------------------------------------
+    template: StringProperty(
+        name="Template",
+        description="Template for render output naming. Use {{variable}} syntax",
+        default="{{blend_file}}/{{scene}}_{{date}}",
+        update=lambda self, ctx: _update_preview(self, ctx),
+    )
+    
+    # -------------------------------------------------------------------------
+    # Organization Options (Folder Creation)
+    # -------------------------------------------------------------------------
+    folder_per_scene: BoolProperty(
+        name="Folder per Scene",
+        description="Create a subfolder for each scene",
+        default=False,
+        update=lambda self, ctx: _sync_template_from_options(self, ctx),
+    )
+    
+    folder_per_camera: BoolProperty(
+        name="Folder per Camera",
+        description="Create a subfolder for each camera",
+        default=False,
+        update=lambda self, ctx: _sync_template_from_options(self, ctx),
+    )
+    
+    folder_per_date: BoolProperty(
+        name="Folder per Date",
+        description="Create a subfolder for each render date",
+        default=False,
+        update=lambda self, ctx: _sync_template_from_options(self, ctx),
+    )
+    
+    use_blend_root: BoolProperty(
+        name="Use Blend File as Root",
+        description="Use the .blend filename as the root folder",
+        default=True,
+        update=lambda self, ctx: _sync_template_from_options(self, ctx),
+    )
+    
+    # -------------------------------------------------------------------------
+    # Naming Options
+    # -------------------------------------------------------------------------
+    sanitize_names: BoolProperty(
+        name="Sanitize Names",
+        description="Replace special characters and spaces with underscores",
+        default=True,
+    )
+    
+    lowercase: BoolProperty(
+        name="Lowercase",
+        description="Convert all text to lowercase",
+        default=False,
+    )
+    
+    frame_padding: IntProperty(
+        name="Frame Padding",
+        description="Number of digits for frame numbers (e.g., 4 = 0001)",
+        default=4,
+        min=1,
+        max=8,
+    )
+    
+    # -------------------------------------------------------------------------
+    # File Format Override
+    # -------------------------------------------------------------------------
+    include_extension: BoolProperty(
+        name="Include Extension",
+        description="Automatically append file extension based on output format",
+        default=True,
+    )
+    
+    # -------------------------------------------------------------------------
+    # Live Preview (Read-only, computed)
+    # -------------------------------------------------------------------------
+    preview: StringProperty(
+        name="Preview",
+        description="Live preview of the render output path",
+        default="",
+    )
+    
+    # -------------------------------------------------------------------------
+    # UI State
+    # -------------------------------------------------------------------------
+    show_options: BoolProperty(
+        name="Show Options",
+        description="Expand/collapse the options panel",
+        default=True,
+    )
+    
+    show_variables: BoolProperty(
+        name="Show Variables",
+        description="Expand/collapse the variables reference",
+        default=False,
+    )
+    
+    # -------------------------------------------------------------------------
+    # Preset Management
+    # -------------------------------------------------------------------------
+    preset_name: StringProperty(
+        name="Preset Name",
+        description="Name for saving the current settings as a preset",
+        default="",
+    )
+    
+    presets: CollectionProperty(
+        type=RENDERNAMES_PresetItem,
+        name="Presets",
+    )
+    
+    active_preset_index: IntProperty(
+        name="Active Preset",
+        default=0,
+    )
+
+
+# ============================================================================
+# Update Callbacks
+# ============================================================================
+
+def _update_preview(props, context):
+    """Update the live preview when template changes."""
+    # Import here to avoid circular imports
+    from . import template_engine
+    
+    if context.scene:
+        preview_path = template_engine.render_template(
+            props.template,
+            context.scene,
+            props,
+            sample=True,
+        )
+        props["preview"] = preview_path
+
+
+def _sync_template_from_options(props, context):
+    """Sync template from checkbox options (build template from options)."""
+    # This is a helper for users who prefer checkboxes over manual editing
+    # The template is the source of truth, but checkboxes can modify it
+    parts = []
+    
+    if props.use_blend_root:
+        parts.append("{{blend_file}}")
+    
+    if props.folder_per_date:
+        parts.append("{{date}}")
+    
+    if props.folder_per_scene:
+        parts.append("{{scene}}")
+    
+    if props.folder_per_camera:
+        parts.append("{{camera}}")
+    
+    # Base filename
+    if not parts:
+        parts.append("{{scene}}")
+    
+    # Add frame for image sequences
+    parts.append("{{frame}}")
+    
+    # Build path
+    props["template"] = "/".join(parts)
+    
+    # Update preview
+    _update_preview(props, context)
+
+
+# ============================================================================
+# Registration
+# ============================================================================
+
+_classes = (
+    RENDERNAMES_PresetItem,
+    RENDERNAMES_Properties,
+)
+
+
+def register():
+    """Register property classes."""
+    for cls in _classes:
+        bpy.utils.register_class(cls)
+    
+    # Attach to Scene type - settings persist with .blend file
+    bpy.types.Scene.rendernames = bpy.props.PointerProperty(
+        type=RENDERNAMES_Properties,
+    )
+
+
+def unregister():
+    """Unregister property classes."""
+    # Remove from Scene type
+    if hasattr(bpy.types.Scene, "rendernames"):
+        del bpy.types.Scene.rendernames
+    
+    for cls in reversed(_classes):
+        bpy.utils.unregister_class(cls)

@@ -1,0 +1,46 @@
+# ============================================================================
+# RenderNames - Smart Render Naming for Blender
+# ============================================================================
+# Modern extension manifest for Blender 4.2+
+# https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html
+
+schema_version = "1.0.0"
+
+id = "rendernames"
+version = "1.0.0"
+name = "RenderNames"
+tagline = "Smart template-based render file naming and organization"
+maintainer = "Shayan Moradi"
+type = "add-on"
+
+# Blender compatibility
+blender_version_min = "4.2.0"
+# blender_version_max = "6.0.0"  # Uncomment if we hit breaking changes
+
+# License
+license = ["SPDX:GPL-3.0-or-later"]
+copyright = ["2024-2025 Shayan Moradi"]
+
+# Tags for the extensions platform
+tags = ["Render", "Pipeline", "Import-Export"]
+
+# Website (update when published)
+# website = "https://github.com/yourusername/rendernames-blender"
+
+# Permissions - we need file access for creating render folders
+[permissions]
+files = "Create render output folders and save preset files"
+
+# Build configuration
+[build]
+paths_exclude_pattern = [
+    "__pycache__/",
+    ".*",
+    "*.zip",
+    "*.pyc",
+    ".git/",
+    ".vscode/",
+    "docs/",
+    "tests/",
+    "*.md",
+]
