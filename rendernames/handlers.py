@@ -45,8 +45,20 @@ def on_render_init(scene):
             props,
         )
         
-        # Get base path (relative to .blend file)
-        base_path = "//renders/"
+        # Get base path
+        if props.use_base_path and props.base_path:
+            # Use custom base path
+            base_path = props.base_path
+        else:
+            # Use Blender's existing output path directory
+            existing_path = scene.render.filepath
+            if existing_path:
+                # Extract directory from existing path
+                base_path = os.path.dirname(existing_path)
+                if not base_path:
+                    base_path = "//renders/"
+            else:
+                base_path = "//renders/"
         
         # Combine and set the render path
         full_path = os.path.join(base_path, rendered)

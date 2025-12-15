@@ -17,7 +17,9 @@ import bpy
 
 BUILTIN_PRESETS: Dict[str, Dict[str, Any]] = {
     "simple": {
-        "template": "{{scene}}_{{frame_start}}-{{frame_end}}",
+        "template": "{{scene}}_{{frame}}",
+        "use_base_path": False,
+        "base_path": "",
         "folder_per_scene": False,
         "folder_per_camera": False,
         "folder_per_date": False,
@@ -27,17 +29,21 @@ BUILTIN_PRESETS: Dict[str, Dict[str, Any]] = {
         "frame_padding": 4,
     },
     "professional": {
-        "template": "{{blend_file}}/{{date}}/{{scene}}_{{camera}}_{{resolution}}/{{frame}}",
+        "template": "{{blend_file}}/{{date}}/{{scene}}_{{camera}}/{{frame}}",
+        "use_base_path": False,
+        "base_path": "",
         "folder_per_scene": True,
         "folder_per_camera": True,
         "folder_per_date": True,
         "use_blend_root": True,
         "sanitize_names": True,
-        "lowercase": True,
+        "lowercase": False,
         "frame_padding": 4,
     },
     "archival": {
-        "template": "{{datetime}}/{{blend_file}}_{{scene}}_f{{frame_start}}-{{frame_end}}",
+        "template": "{{datetime}}/{{blend_file}}_{{scene}}_{{frame}}",
+        "use_base_path": False,
+        "base_path": "",
         "folder_per_scene": False,
         "folder_per_camera": False,
         "folder_per_date": True,
@@ -47,23 +53,27 @@ BUILTIN_PRESETS: Dict[str, Dict[str, Any]] = {
         "frame_padding": 5,
     },
     "by_camera": {
-        "template": "{{blend_file}}/{{camera}}/{{scene}}_{{date}}_{{frame}}",
+        "template": "{{camera}}/{{scene}}_{{frame}}",
+        "use_base_path": False,
+        "base_path": "",
         "folder_per_scene": False,
         "folder_per_camera": True,
         "folder_per_date": False,
-        "use_blend_root": True,
+        "use_blend_root": False,
         "sanitize_names": True,
         "lowercase": False,
         "frame_padding": 4,
     },
     "minimal": {
         "template": "{{scene}}_{{frame}}",
+        "use_base_path": False,
+        "base_path": "",
         "folder_per_scene": False,
         "folder_per_camera": False,
         "folder_per_date": False,
         "use_blend_root": False,
         "sanitize_names": True,
-        "lowercase": True,
+        "lowercase": False,
         "frame_padding": 4,
     },
 }
@@ -121,6 +131,8 @@ def extract_preset_data(props) -> Dict[str, Any]:
     return {
         "version": 1,  # For future compatibility
         "template": props.template,
+        "use_base_path": props.use_base_path,
+        "base_path": props.base_path,
         "folder_per_scene": props.folder_per_scene,
         "folder_per_camera": props.folder_per_camera,
         "folder_per_date": props.folder_per_date,
@@ -145,6 +157,12 @@ def apply_preset_data(props, data: Dict[str, Any]) -> None:
     # Apply each property if it exists in the data
     if "template" in data:
         props.template = data["template"]
+    
+    if "use_base_path" in data:
+        props.use_base_path = data["use_base_path"]
+    
+    if "base_path" in data:
+        props.base_path = data["base_path"]
     
     if "folder_per_scene" in data:
         props.folder_per_scene = data["folder_per_scene"]

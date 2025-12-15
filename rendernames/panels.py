@@ -4,6 +4,8 @@
 # UI Panel definitions - appears in Output Properties
 # Clean, Blender-native look with progressive disclosure
 
+import os
+
 import bpy
 from bpy.types import Panel
 
@@ -44,6 +46,22 @@ class RENDERNAMES_PT_main(Panel):
         row.operator("rendernames.variable_menu", text="", icon="ADD")
         row.operator("rendernames.reset_template", text="", icon="LOOP_BACK")
         
+        # Base Path Section
+        col.separator()
+        
+        box = col.box()
+        row = box.row()
+        row.prop(props, "use_base_path", text="Custom Base Path")
+        
+        if props.use_base_path:
+            sub = box.row()
+            sub.prop(props, "base_path", text="")
+        else:
+            sub = box.row()
+            sub.enabled = False
+            sub.scale_y = 0.8
+            sub.label(text="Using Blender's output path", icon="INFO")
+        
         # Live Preview
         col.separator()
         
@@ -52,12 +70,28 @@ class RENDERNAMES_PT_main(Panel):
         
         # Calculate preview
         if props.template:
-            preview = template_engine.render_template(
+            # Get base path for preview
+            if props.use_base_path and props.base_path:
+                base = props.base_path
+            else:
+                existing = scene.render.filepath
+                if existing:
+                    base = os.path.dirname(existing) or "//"
+                else:
+                    base = "//"
+            
+            rendered = template_engine.render_template(
                 props.template,
                 scene,
                 props,
                 sample=True,
             )
+            
+            # Combine for full preview
+            if base.endswith("/"):
+                preview = base + rendered
+            else:
+                preview = base + "/" + rendered
         else:
             preview = "(empty template)"
         

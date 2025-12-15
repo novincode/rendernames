@@ -45,8 +45,21 @@ class RENDERNAMES_Properties(PropertyGroup):
     template: StringProperty(
         name="Template",
         description="Template for render output naming. Use {{variable}} syntax",
-        default="{{blend_file}}/{{scene}}_{{date}}",
+        default="{{scene}}_{{frame}}",
         update=lambda self, ctx: _update_preview(self, ctx),
+    )
+    
+    base_path: StringProperty(
+        name="Base Path",
+        description="Base directory for renders (leave empty to use Blender's output path)",
+        default="",
+        subtype="DIR_PATH",
+    )
+    
+    use_base_path: BoolProperty(
+        name="Use Custom Base Path",
+        description="Use custom base path instead of Blender's output path",
+        default=False,
     )
     
     # -------------------------------------------------------------------------

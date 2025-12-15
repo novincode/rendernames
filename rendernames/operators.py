@@ -100,7 +100,7 @@ class RENDERNAMES_OT_reset_template(Operator):
     
     def execute(self, context):
         props = context.scene.rendernames
-        props.template = "{{blend_file}}/{{scene}}_{{date}}"
+        props.template = "{{scene}}_{{frame}}"
         self.report({"INFO"}, "Template reset to default")
         return {"FINISHED"}
 
