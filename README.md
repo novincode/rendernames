@@ -6,6 +6,8 @@ Stop manually renaming files. Stop creating folders. Stop losing track of which 
 
 RenderNames gives you **template-based file naming** with live preview, automatic folder organization, and preset management—built right into Blender's Output Properties panel.
 
+![RenderNames Cover](https://github.com/user-attachments/assets/47ef10e7-b964-448b-b4a9-9be0b044becd)
+
 ---
 
 ## Why This Exists
@@ -37,6 +39,8 @@ Blender adds frame numbers automatically. You handle the rest.
 💾 **Presets** — Save and share your favorite setups  
 🔧 **Blender Native** — Lives in Output Properties (no weird UI)  
 ⚡ **Non-Destructive** — Enable/disable without losing settings  
+
+![RenderNames Features](https://github.com/user-attachments/assets/803acf15-f12c-4601-b232-d80f96e313c8)
 
 ---
 
@@ -103,13 +107,17 @@ Blender automatically adds frame numbers (0001, 0002, ...) to animations. The pr
 
 ## Built-in Presets
 
+Default presets ready to go:
+
 - **Simple** — Just scene name
 - **Professional** — Full folder structure with date and camera
 - **Archival** — Timestamped for versioning
 - **By Camera** — Organized by camera name
 - **Minimal** — Bare minimum
 
-You can also **save custom presets** and **export/import as JSON** to share with your team.
+Create your own custom presets, export as JSON, and unlock consistency across your entire team.
+
+![RenderNames Presets](https://github.com/user-attachments/assets/7016cb90-8fa8-4451-ad40-59fb570c6458)
 
 ---
 
