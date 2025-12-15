@@ -17,9 +17,7 @@ jobs:
           python-version: '3.11'
       
       - name: Build extension
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          python3 scripts/release.py "$VERSION"
+        run: python3 scripts/build.py
       
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
