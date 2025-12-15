@@ -45,7 +45,7 @@ class RENDERNAMES_Properties(PropertyGroup):
     template: StringProperty(
         name="Template",
         description="Template for render output naming. Use {{variable}} syntax",
-        default="{{scene}}",
+        default="{{scene}}_",
         update=lambda self, ctx: _update_preview(self, ctx),
     )
     
@@ -69,28 +69,28 @@ class RENDERNAMES_Properties(PropertyGroup):
         name="Folder per Scene",
         description="Create a subfolder for each scene",
         default=False,
-        # REMOVED: update callback that was auto-modifying template
+        update=lambda self, ctx: _sync_template_from_options(self, ctx),
     )
     
     folder_per_camera: BoolProperty(
         name="Folder per Camera",
         description="Create a subfolder for each camera",
         default=False,
-        # REMOVED: update callback that was auto-modifying template
+        update=lambda self, ctx: _sync_template_from_options(self, ctx),
     )
     
     folder_per_date: BoolProperty(
         name="Folder per Date",
         description="Create a subfolder for each render date",
         default=False,
-        # REMOVED: update callback that was auto-modifying template
+        update=lambda self, ctx: _sync_template_from_options(self, ctx),
     )
     
     use_blend_root: BoolProperty(
         name="Use Blend File as Root",
         description="Use the .blend filename as the root folder",
         default=True,
-        # REMOVED: update callback that was auto-modifying template
+        update=lambda self, ctx: _sync_template_from_options(self, ctx),
     )
     
     # -------------------------------------------------------------------------
@@ -172,6 +172,37 @@ class RENDERNAMES_Properties(PropertyGroup):
 # ============================================================================
 # Update Callbacks
 # ============================================================================
+
+def _sync_template_from_options(props, context):
+    """Build template path from folder structure checkboxes."""
+    parts = []
+    
+    # Root folder
+    if props.use_blend_root:
+        parts.append("{{blend_file}}")
+    
+    # Subfolders
+    if props.folder_per_scene:
+        parts.append("{{scene}}")
+    if props.folder_per_camera:
+        parts.append("{{camera}}")
+    if props.folder_per_date:
+        parts.append("{{date}}")
+    
+    # Filename base
+    if not props.folder_per_scene:
+        # If scene isn't a folder, include it in filename
+        parts.append("{{scene}}_")
+    else:
+        # Scene is already a folder, just add underscore for frame
+        parts.append("")
+    
+    # Build path
+    props.template = "/".join(parts)
+    
+    # Update preview
+    _update_preview(props, context)
+
 
 def _update_preview(props, context):
     """Update the live preview when template changes."""

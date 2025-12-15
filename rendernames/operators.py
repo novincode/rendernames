@@ -74,7 +74,7 @@ class RENDERNAMES_OT_variable_menu(Operator):
     
     def invoke(self, context, event):
         wm = context.window_manager
-        return wm.invoke_popup(self, width=250)
+        return wm.invoke_popup(self, width=500)
     
     def draw(self, context):
         layout = self.layout
@@ -98,12 +98,17 @@ class RENDERNAMES_OT_variable_menu(Operator):
             for var_name in vars:
                 if var_name in descriptions:
                     row = box.row(align=True)
-                    op = row.operator(
+                    
+                    # Variable button - fixed width
+                    split = row.split(factor=0.35)
+                    op = split.operator(
                         "rendernames.insert_variable",
                         text=f"{{{{{var_name}}}}}",
                     )
                     op.variable = var_name
-                    row.label(text=descriptions[var_name])
+                    
+                    # Description - takes remaining space
+                    split.label(text=descriptions[var_name])
 
 
 # ============================================================================
@@ -118,7 +123,7 @@ class RENDERNAMES_OT_reset_template(Operator):
     
     def execute(self, context):
         props = context.scene.rendernames
-        props.template = "{{scene}}"
+        props.template = "{{scene}}_"
         self.report({"INFO"}, "Template reset to default")
         return {"FINISHED"}
 
