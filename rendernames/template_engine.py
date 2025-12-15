@@ -41,7 +41,7 @@ def _get_variables() -> Dict[str, tuple[str, Callable]]:
         
         # Frame Information
         "frame": (
-            "Frame number from render start to end",
+            "⚠️ Not recommended - Blender adds frames automatically",
             lambda scene, props: str(scene.frame_start).zfill(props.frame_padding),
         ),
         "frame_start": (

@@ -118,7 +118,7 @@ class RENDERNAMES_OT_reset_template(Operator):
     
     def execute(self, context):
         props = context.scene.rendernames
-        props.template = "{{scene}}_{{frame}}"
+        props.template = "{{scene}}"
         self.report({"INFO"}, "Template reset to default")
         return {"FINISHED"}
 
@@ -430,6 +430,7 @@ class RENDERNAMES_MT_presets(bpy.types.Menu):
 
 _classes = (
     RENDERNAMES_OT_insert_variable,
+    RENDERNAMES_OT_copy_variable,
     RENDERNAMES_OT_variable_menu,
     RENDERNAMES_OT_reset_template,
     RENDERNAMES_OT_clear_template,

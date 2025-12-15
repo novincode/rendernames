@@ -45,7 +45,7 @@ class RENDERNAMES_Properties(PropertyGroup):
     template: StringProperty(
         name="Template",
         description="Template for render output naming. Use {{variable}} syntax",
-        default="{{scene}}_{{frame}}",
+        default="{{scene}}",
         update=lambda self, ctx: _update_preview(self, ctx),
     )
     
