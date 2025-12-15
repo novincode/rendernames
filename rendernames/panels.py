@@ -84,7 +84,6 @@ class RENDERNAMES_PT_main(Panel):
                 props.template,
                 scene,
                 props,
-                sample=True,
             )
             
             # Combine for full preview
@@ -244,9 +243,9 @@ class RENDERNAMES_PT_variables(Panel):
                     row = col.row()
                     row.scale_y = 0.9
                     
-                    # Variable syntax (clickable)
+                    # Variable syntax (clickable - copies to clipboard)
                     op = row.operator(
-                        "rendernames.insert_variable",
+                        "rendernames.copy_variable",
                         text=f"{{{{{name}}}}}",
                         emboss=False,
                     )

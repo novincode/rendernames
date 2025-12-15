@@ -41,8 +41,8 @@ def _get_variables() -> Dict[str, tuple[str, Callable]]:
         
         # Frame Information
         "frame": (
-            "Current frame number",
-            lambda scene, props: str(scene.frame_current).zfill(props.frame_padding),
+            "Frame number from render start to end",
+            lambda scene, props: str(scene.frame_start).zfill(props.frame_padding),
         ),
         "frame_start": (
             "First frame of range",
@@ -176,7 +176,7 @@ def render_template(
         template: The template string with {{variable}} placeholders
         scene: The Blender scene context
         props: RenderNames properties
-        sample: If True, use sample values for preview
+        sample: Not used (kept for compatibility)
         
     Returns:
         The rendered string with all variables substituted
@@ -188,6 +188,7 @@ def render_template(
         
         if var_name in variables:
             _, resolver = variables[var_name]
+            
             try:
                 value = resolver(scene, props)
             except Exception:

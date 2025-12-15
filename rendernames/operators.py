@@ -45,6 +45,24 @@ class RENDERNAMES_OT_insert_variable(Operator):
         return {"FINISHED"}
 
 
+class RENDERNAMES_OT_copy_variable(Operator):
+    """Copy a template variable syntax to clipboard"""
+    bl_idname = "rendernames.copy_variable"
+    bl_label = "Copy Variable"
+    bl_options = {"REGISTER"}
+    
+    variable: StringProperty(
+        name="Variable",
+        description="Variable name to copy",
+    )
+    
+    def execute(self, context):
+        var_text = f"{{{{{self.variable}}}}}"
+        context.window_manager.clipboard = var_text
+        self.report({"INFO"}, f"Copied {var_text} to clipboard")
+        return {"FINISHED"}
+
+
 class RENDERNAMES_OT_variable_menu(Operator):
     """Show menu of available template variables"""
     bl_idname = "rendernames.variable_menu"

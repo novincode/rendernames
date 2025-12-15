@@ -1,11 +1,10 @@
 # ============================================================================
 # RenderNames - Handlers
 # ============================================================================
-# Blender event handlers for automatic render path updates
-# Hooks into render pipeline to apply templates dynamically
+# Blender event handlers for render path management
+# Strategy: Set path before render, restore after render completes
 
 import os
-from typing import Set
 
 import bpy
 from bpy.app.handlers import persistent
@@ -22,9 +21,8 @@ def on_render_init(scene):
     """
     Called before rendering starts.
     
-    Applies the template to the render output path.
-    This is where the magic happens - we intercept the render
-    and set the correct output path based on the template.
+    Apply the template to render.filepath, but store the original
+    so we can restore it after rendering completes.
     """
     if not hasattr(scene, "rendernames"):
         return
@@ -38,6 +36,16 @@ def on_render_init(scene):
         return
     
     try:
+        # Store original path ONLY on first render_init call
+        if "_rendernames_original_filepath" not in scene:
+            scene["_rendernames_original_filepath"] = scene.render.filepath
+        
+        # Get base path
+        if props.use_base_path and props.base_path:
+            base_path = props.base_path
+        else:
+            base_path = "//"
+        
         # Render the template
         rendered = template_engine.render_template(
             props.template,
@@ -45,43 +53,24 @@ def on_render_init(scene):
             props,
         )
         
-        # Get base path
-        if props.use_base_path and props.base_path:
-            # Use custom base path
-            base_path = props.base_path
+        # Build full path
+        if base_path.endswith("/"):
+            full_path = base_path + rendered
         else:
-            # Use Blender's existing output path directory
-            existing_path = scene.render.filepath
-            if existing_path:
-                # Extract directory from existing path
-                base_path = os.path.dirname(existing_path)
-                if not base_path:
-                    base_path = "//renders/"
-            else:
-                base_path = "//renders/"
+            full_path = base_path + "/" + rendered
         
-        # Combine and set the render path
-        full_path = os.path.join(base_path, rendered)
-        
-        # Store original path for potential restoration
-        if not hasattr(scene, "_rendernames_original_path"):
-            scene["_rendernames_original_path"] = scene.render.filepath
-        
-        # Set the new path
-        scene.render.filepath = full_path
-        
-        # Ensure the directory exists
+        # Create directories
         abs_path = bpy.path.abspath(full_path)
         dir_path = os.path.dirname(abs_path)
-        
         if dir_path and not os.path.exists(dir_path):
             os.makedirs(dir_path, exist_ok=True)
-            print(f"RenderNames: Created directory: {dir_path}")
         
-        print(f"RenderNames: Output path set to: {full_path}")
+        # Apply to render
+        scene.render.filepath = full_path
+        print(f"RenderNames: Set render path to: {full_path}")
         
     except Exception as e:
-        print(f"RenderNames: Error applying template: {e}")
+        print(f"RenderNames: Error in render_init: {e}")
 
 
 @persistent
@@ -89,7 +78,7 @@ def on_render_complete(scene):
     """
     Called after rendering completes.
     
-    Could be used for logging or cleanup.
+    Restore the original filepath that user had set.
     """
     if not hasattr(scene, "rendernames"):
         return
@@ -99,16 +88,40 @@ def on_render_complete(scene):
     if not props.enabled:
         return
     
-    # Log success (optional)
-    print(f"RenderNames: Render complete - {scene.render.filepath}")
+    try:
+        # Restore original path
+        if "_rendernames_original_filepath" in scene:
+            original = scene["_rendernames_original_filepath"]
+            scene.render.filepath = original
+            print(f"RenderNames: Restored original path: {original}")
+            # Clear the stored original
+            del scene["_rendernames_original_filepath"]
+    
+    except Exception as e:
+        print(f"RenderNames: Error in render_complete: {e}")
 
 
 @persistent
 def on_render_cancel(scene):
     """
     Called when rendering is cancelled.
+    
+    Restore the original filepath.
     """
-    pass  # Nothing special needed
+    if not hasattr(scene, "rendernames"):
+        return
+    
+    try:
+        # Restore original path
+        if "_rendernames_original_filepath" in scene:
+            original = scene["_rendernames_original_filepath"]
+            scene.render.filepath = original
+            print(f"RenderNames: Render cancelled - restored path: {original}")
+            # Clear the stored original
+            del scene["_rendernames_original_filepath"]
+    
+    except Exception as e:
+        print(f"RenderNames: Error in render_cancel: {e}")
 
 
 @persistent
@@ -116,38 +129,24 @@ def on_load_post(dummy):
     """
     Called after a .blend file is loaded.
     
-    Refreshes the preset list and updates preview.
+    Clean up any stored paths and refresh presets.
     """
-    # Refresh presets for all scenes
     for scene in bpy.data.scenes:
+        if "_rendernames_original_filepath" in scene:
+            del scene["_rendernames_original_filepath"]
+        
         if hasattr(scene, "rendernames"):
             from . import presets
             presets.refresh_preset_list(scene.rendernames)
 
 
-@persistent
-def on_scene_update(scene, depsgraph):
-    """
-    Called when scene updates (used for live preview updates).
-    
-    Note: This can be called very frequently, so we keep it minimal.
-    The preview is primarily updated via property update callbacks.
-    """
-    pass  # Preview updates handled by property callbacks
-
-
 # ============================================================================
-# Timer for Preview Updates (Optional)
+# Timer for Preview Updates
 # ============================================================================
 
 def _preview_timer():
     """
     Timer function for periodic preview updates.
-    
-    This ensures the preview stays current even when
-    external factors change (like system time).
-    
-    Returns None to stop, or float for next interval.
     """
     try:
         context = bpy.context
@@ -159,19 +158,16 @@ def _preview_timer():
                     props.template,
                     context.scene,
                     props,
-                    sample=True,
                 )
                 
-                # Only update if changed (avoid unnecessary redraws)
                 if props.preview != preview:
                     props["preview"] = preview
     except Exception:
-        pass  # Silently fail - timer shouldn't crash Blender
+        pass
     
-    return 5.0  # Update every 5 seconds
+    return 5.0
 
 
-# Track if timer is registered
 _timer_registered = False
 
 
@@ -183,7 +179,6 @@ def register():
     """Register handlers."""
     global _timer_registered
     
-    # Render handlers
     if on_render_init not in bpy.app.handlers.render_init:
         bpy.app.handlers.render_init.append(on_render_init)
     
@@ -193,11 +188,9 @@ def register():
     if on_render_cancel not in bpy.app.handlers.render_cancel:
         bpy.app.handlers.render_cancel.append(on_render_cancel)
     
-    # File load handler
     if on_load_post not in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.append(on_load_post)
     
-    # Register preview timer
     if not _timer_registered:
         bpy.app.timers.register(_preview_timer, first_interval=1.0)
         _timer_registered = True
@@ -207,7 +200,6 @@ def unregister():
     """Unregister handlers."""
     global _timer_registered
     
-    # Render handlers
     if on_render_init in bpy.app.handlers.render_init:
         bpy.app.handlers.render_init.remove(on_render_init)
     
@@ -217,11 +209,9 @@ def unregister():
     if on_render_cancel in bpy.app.handlers.render_cancel:
         bpy.app.handlers.render_cancel.remove(on_render_cancel)
     
-    # File load handler
     if on_load_post in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(on_load_post)
     
-    # Unregister timer
     if _timer_registered:
         if bpy.app.timers.is_registered(_preview_timer):
             bpy.app.timers.unregister(_preview_timer)

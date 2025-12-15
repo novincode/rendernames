@@ -69,28 +69,28 @@ class RENDERNAMES_Properties(PropertyGroup):
         name="Folder per Scene",
         description="Create a subfolder for each scene",
         default=False,
-        update=lambda self, ctx: _sync_template_from_options(self, ctx),
+        # REMOVED: update callback that was auto-modifying template
     )
     
     folder_per_camera: BoolProperty(
         name="Folder per Camera",
         description="Create a subfolder for each camera",
         default=False,
-        update=lambda self, ctx: _sync_template_from_options(self, ctx),
+        # REMOVED: update callback that was auto-modifying template
     )
     
     folder_per_date: BoolProperty(
         name="Folder per Date",
         description="Create a subfolder for each render date",
         default=False,
-        update=lambda self, ctx: _sync_template_from_options(self, ctx),
+        # REMOVED: update callback that was auto-modifying template
     )
     
     use_blend_root: BoolProperty(
         name="Use Blend File as Root",
         description="Use the .blend filename as the root folder",
         default=True,
-        update=lambda self, ctx: _sync_template_from_options(self, ctx),
+        # REMOVED: update callback that was auto-modifying template
     )
     
     # -------------------------------------------------------------------------
@@ -183,41 +183,8 @@ def _update_preview(props, context):
             props.template,
             context.scene,
             props,
-            sample=True,
         )
         props["preview"] = preview_path
-
-
-def _sync_template_from_options(props, context):
-    """Sync template from checkbox options (build template from options)."""
-    # This is a helper for users who prefer checkboxes over manual editing
-    # The template is the source of truth, but checkboxes can modify it
-    parts = []
-    
-    if props.use_blend_root:
-        parts.append("{{blend_file}}")
-    
-    if props.folder_per_date:
-        parts.append("{{date}}")
-    
-    if props.folder_per_scene:
-        parts.append("{{scene}}")
-    
-    if props.folder_per_camera:
-        parts.append("{{camera}}")
-    
-    # Base filename
-    if not parts:
-        parts.append("{{scene}}")
-    
-    # Add frame for image sequences
-    parts.append("{{frame}}")
-    
-    # Build path
-    props["template"] = "/".join(parts)
-    
-    # Update preview
-    _update_preview(props, context)
 
 
 # ============================================================================
