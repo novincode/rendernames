@@ -24,7 +24,7 @@ class RENDERNAMES_OT_insert_variable(Operator):
     """Insert a template variable at cursor position"""
     bl_idname = "rendernames.insert_variable"
     bl_label = "Insert Variable"
-    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
+    bl_options = {"REGISTER", "UNDO"}
     
     variable: StringProperty(
         name="Variable",
@@ -42,7 +42,8 @@ class RENDERNAMES_OT_insert_variable(Operator):
             props.template += "_"
         props.template += var_text
         
-        return {"FINISHED"}
+        # Return INTERFACE to close any open popups
+        return {"INTERFACE"}
 
 
 class RENDERNAMES_OT_copy_variable(Operator):
@@ -63,22 +64,13 @@ class RENDERNAMES_OT_copy_variable(Operator):
         return {"FINISHED"}
 
 
-class RENDERNAMES_OT_variable_menu(Operator):
-    """Show menu of available template variables"""
-    bl_idname = "rendernames.variable_menu"
+class RENDERNAMES_MT_variable_menu(bpy.types.Menu):
+    """Menu of available template variables - auto-closes on click"""
+    bl_idname = "RENDERNAMES_MT_variable_menu"
     bl_label = "Variables"
-    bl_options = {"REGISTER"}
-    
-    def execute(self, context):
-        return {"FINISHED"}
-    
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_popup(self, width=500)
     
     def draw(self, context):
         layout = self.layout
-        
         descriptions = template_engine.get_variable_descriptions()
         
         # Group variables by category
@@ -92,23 +84,17 @@ class RENDERNAMES_OT_variable_menu(Operator):
         }
         
         for category, vars in categories.items():
-            box = layout.box()
-            box.label(text=category, icon="DOT")
+            layout.label(text=category, icon="DOT")
             
             for var_name in vars:
                 if var_name in descriptions:
-                    row = box.row(align=True)
-                    
-                    # Variable button - fixed width
-                    split = row.split(factor=0.35)
-                    op = split.operator(
+                    op = layout.operator(
                         "rendernames.insert_variable",
-                        text=f"{{{{{var_name}}}}}",
+                        text=f"{{{{{var_name}}}}} - {descriptions[var_name]}",
                     )
                     op.variable = var_name
-                    
-                    # Description - takes remaining space
-                    split.label(text=descriptions[var_name])
+            
+            layout.separator()
 
 
 # ============================================================================
@@ -436,7 +422,7 @@ class RENDERNAMES_MT_presets(bpy.types.Menu):
 _classes = (
     RENDERNAMES_OT_insert_variable,
     RENDERNAMES_OT_copy_variable,
-    RENDERNAMES_OT_variable_menu,
+    RENDERNAMES_MT_variable_menu,
     RENDERNAMES_OT_reset_template,
     RENDERNAMES_OT_clear_template,
     RENDERNAMES_OT_copy_preview,

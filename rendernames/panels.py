@@ -43,7 +43,7 @@ class RENDERNAMES_PT_main(Panel):
         
         row = col.row(align=True)
         row.prop(props, "template", text="")
-        row.operator("rendernames.variable_menu", text="", icon="ADD")
+        row.menu("RENDERNAMES_MT_variable_menu", text="", icon="ADD")
         row.operator("rendernames.reset_template", text="", icon="LOOP_BACK")
         
         # Base Path Section
