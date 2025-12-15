@@ -66,7 +66,7 @@ class RENDERNAMES_PT_main(Panel):
         col.separator()
         
         box = col.box()
-        box.scale_y = 0.8
+        box.scale_y = 1.0
         
         # Calculate preview
         if props.template:
@@ -94,22 +94,11 @@ class RENDERNAMES_PT_main(Panel):
         else:
             preview = "(empty template)"
         
-        row = box.row()
+        # Show full preview with expandable row
+        row = box.row(align=True)
         row.label(text="", icon="FORWARD")
-        
-        # Truncate long previews
-        max_len = 50
-        if len(preview) > max_len:
-            display = "..." + preview[-(max_len - 3):]
-        else:
-            display = preview
-        
-        row.label(text=display)
-        
-        # Copy button
-        sub = row.row()
-        sub.scale_x = 0.3
-        sub.operator("rendernames.copy_preview", text="", icon="COPYDOWN")
+        row.label(text=preview)  # Full path without truncation
+        row.operator("rendernames.copy_preview", text="", icon="COPYDOWN")
 
 
 # ============================================================================

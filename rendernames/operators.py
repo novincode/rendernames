@@ -127,14 +127,46 @@ class RENDERNAMES_OT_clear_template(Operator):
 
 
 class RENDERNAMES_OT_copy_preview(Operator):
-    """Copy the preview path to clipboard"""
+    """Copy the full render path to clipboard"""
     bl_idname = "rendernames.copy_preview"
     bl_label = "Copy Preview Path"
     
     def execute(self, context):
-        props = context.scene.rendernames
-        context.window_manager.clipboard = props.preview
-        self.report({"INFO"}, "Path copied to clipboard")
+        scene = context.scene
+        props = scene.rendernames
+        
+        if not props.template:
+            self.report({"WARNING"}, "Template is empty")
+            return {"FINISHED"}
+        
+        # Compute the full path (same as in panel)
+        if props.use_base_path and props.base_path:
+            base = props.base_path
+        else:
+            existing = scene.render.filepath
+            if existing:
+                base = os.path.dirname(existing) or "//"
+            else:
+                base = "//"
+        
+        from . import template_engine
+        rendered = template_engine.render_template(
+            props.template,
+            scene,
+            props,
+        )
+        
+        # Combine for full path
+        if base.endswith("/"):
+            full_path = base + rendered
+        else:
+            full_path = base + "/" + rendered
+        
+        # Convert to absolute path for clipboard
+        abs_path = bpy.path.abspath(full_path)
+        
+        context.window_manager.clipboard = abs_path
+        self.report({"INFO"}, f"Copied: {abs_path}")
         return {"FINISHED"}
 
 
