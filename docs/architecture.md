@@ -12,7 +12,7 @@ RenderNames is a Blender extension that provides template-based render output na
 ## Project Structure
 
 ```
-rendernames-blender/
+repo_root/
 ├── README.md                    # User documentation
 ├── .gitignore                   # Git ignore patterns
 ├── docs/

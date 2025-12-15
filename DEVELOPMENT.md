@@ -9,17 +9,17 @@
 
 **macOS:**
 ```bash
-ln -s /path/to/rendernames-blender/rendernames ~/Library/Application\ Support/Blender/4.2/extensions/user_default/rendernames
+ln -s /path/to/rendernames/rendernames ~/Library/Application\ Support/Blender/4.2/extensions/user_default/rendernames
 ```
 
 **Linux:**
 ```bash
-ln -s /path/to/rendernames-blender/rendernames ~/.config/blender/4.2/extensions/user_default/rendernames
+ln -s /path/to/rendernames/rendernames ~/.config/blender/4.2/extensions/user_default/rendernames
 ```
 
 **Windows (PowerShell as Admin):**
 ```powershell
-New-Item -ItemType SymbolicLink -Path "$env:APPDATA\Blender Foundation\Blender\4.2\extensions\user_default\rendernames" -Target "C:\path\to\rendernames-blender\rendernames"
+New-Item -ItemType SymbolicLink -Path "$env:APPDATA\Blender Foundation\Blender\4.2\extensions\user_default\rendernames" -Target "C:\path\to\rendernames\rendernames"
 ```
 
 3. Enable in Blender: Edit → Preferences → Add-ons → Search "RenderNames"
@@ -42,7 +42,7 @@ blender --python-expr "import bpy; bpy.ops.preferences.addon_enable(module='rend
 ## Project Structure
 
 ```
-rendernames-blender/
+rendernames/
 ├── rendernames/           # Extension source (distributable)
 │   ├── blender_manifest.toml
 │   ├── __init__.py

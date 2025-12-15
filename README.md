@@ -13,16 +13,18 @@ A modern Blender extension (4.2+) that gives you complete control over render ou
 
 ## Installation
 
-### Blender 4.2+
-1. Download the latest release `.zip` file
-2. In Blender: Edit → Preferences → Get Extensions
-3. Click the dropdown arrow → Install from Disk
-4. Select the `.zip` file
+See [docs/INSTALL.md](docs/INSTALL.md) for detailed installation instructions.
 
-### From Source
-1. Clone this repository
-2. Zip the `rendernames` folder
-3. Install as above
+**Quick:**
+1. Download latest `.zip` from [Releases](https://github.com/novincode/rendernames/releases)
+2. In Blender 4.2+: Edit → Preferences → Extensions → Install from Disk
+3. Select the zip file, enable it
+
+## Documentation
+
+- **[Installation Guide](docs/INSTALL.md)** - How to install the extension
+- **[Changelog](docs/CHANGELOG.md)** - Version history and updates
+- **[Architecture](docs/architecture.md)** - Technical documentation
 
 ## Quick Start
 
@@ -38,10 +40,9 @@ A modern Blender extension (4.2+) that gives you complete control over render ou
 |----------|-------------|---------|
 | `{{scene}}` | Current scene name | `Scene` |
 | `{{blend_file}}` | Blend file name | `my_project` |
-| `{{frame}}` | Current frame (padded) | `0001` |
 | `{{frame_start}}` | First frame | `0001` |
 | `{{frame_end}}` | Last frame | `0250` |
-| `{{frame_range}}` | Frame range | `1-250` |
+| `{{frame_range}}` | Frame range (RECOMMENDED for videos) | `0001-0250` |
 | `{{date}}` | Current date | `2025-01-15` |
 | `{{time}}` | Current time | `14-30-45` |
 | `{{datetime}}` | Date and time | `2025-01-15_14-30-45` |
@@ -52,24 +53,28 @@ A modern Blender extension (4.2+) that gives you complete control over render ou
 | `{{engine}}` | Render engine | `cycles` |
 | `{{samples}}` | Sample count | `128` |
 
+⚠️ **Important about Frame Numbers:**
+- **For Animations**: Blender automatically adds frame numbers (0001, 0002, etc.) to the end of filenames
+
+
 ## Example Templates
 
 **Simple:**
 ```
-{{scene}}_{{frame_start}}-{{frame_end}}
-→ Scene_0001-0250
+{{scene}}_
+→ Scene_0001.exr, Scene_0002.exr (frame numbers added by Blender)
 ```
 
 **Professional:**
 ```
-{{blend_file}}/{{date}}/{{scene}}_{{camera}}/{{frame}}
-→ my_project/2025-01-15/Scene_Camera/0001
+{{blend_file}}/{{date}}/{{scene}}_{{camera}}
+→ my_project/2025-01-15/Scene_Camera_0001.exr
 ```
 
-**Archival:**
+**Video with Frame Range:**
 ```
-{{datetime}}/{{blend_file}}_{{scene}}_f{{frame_start}}-{{frame_end}}
-→ 2025-01-15_14-30-45/my_project_Scene_f0001-0250
+{{scene}}_{{frame_range}}
+→ Scene_0001-0250.mkv
 ```
 
 ## Presets
@@ -110,11 +115,12 @@ A modern Blender extension (4.2+) that gives you complete control over render ou
 
 GPL-3.0-or-later - Same as Blender
 
-## Contributing
+## Development
 
-Contributions welcome! Please open an issue first to discuss changes.
+To build the extension:
+```bash
+python3 scripts/build.py          # Build the plugin
+python3 scripts/build.py release  # Build with release checklist
+```
 
-## Support
-
-- Report bugs via GitHub Issues
-- Feature requests welcome
+See [docs/architecture.md](docs/architecture.md) for technical details.
