@@ -240,21 +240,19 @@ class RENDERNAMES_PT_variables(Panel):
             
             for name in var_names:
                 if name in descriptions:
-                    row = col.row()
-                    row.scale_y = 0.9
+                    # Use split to properly align variable and description
+                    split = col.split(factor=0.4, align=True)
                     
                     # Variable syntax (clickable - copies to clipboard)
-                    op = row.operator(
+                    op = split.operator(
                         "rendernames.copy_variable",
                         text=f"{{{{{name}}}}}",
                         emboss=False,
                     )
                     op.variable = name
                     
-                    # Description
-                    sub = row.row()
-                    sub.alignment = "RIGHT"
-                    sub.label(text=descriptions[name])
+                    # Description - takes remaining space
+                    split.label(text=descriptions[name])
 
 
 # ============================================================================

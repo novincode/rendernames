@@ -24,7 +24,7 @@ class RENDERNAMES_OT_insert_variable(Operator):
     """Insert a template variable at cursor position"""
     bl_idname = "rendernames.insert_variable"
     bl_label = "Insert Variable"
-    bl_options = {"REGISTER", "UNDO"}
+    bl_options = {"REGISTER", "UNDO", "INTERNAL"}
     
     variable: StringProperty(
         name="Variable",

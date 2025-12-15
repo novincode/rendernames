@@ -89,7 +89,7 @@ class RENDERNAMES_Properties(PropertyGroup):
     use_blend_root: BoolProperty(
         name="Use Blend File as Root",
         description="Use the .blend filename as the root folder",
-        default=True,
+        default=False,
         update=lambda self, ctx: _sync_template_from_options(self, ctx),
     )
     

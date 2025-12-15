@@ -53,8 +53,8 @@ def _get_variables() -> Dict[str, tuple[str, Callable]]:
             lambda scene, props: str(scene.frame_end).zfill(props.frame_padding),
         ),
         "frame_range": (
-            "Frame range (start-end)",
-            lambda scene, props: f"{scene.frame_start}-{scene.frame_end}",
+            "Frame range (start-end) with padding applied",
+            lambda scene, props: f"{scene.frame_start}".zfill(props.frame_padding) + "-" + f"{scene.frame_end}".zfill(props.frame_padding),
         ),
         
         # Date & Time
