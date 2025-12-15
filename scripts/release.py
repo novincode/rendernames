@@ -76,7 +76,7 @@ class Release:
     
     def update_changelog(self, new_version: str):
         """Prompt for and add changelog entry."""
-        changelog = self.repo_root / "docs" / "CHANGELOG.md"
+        changelog = self.repo_root / "CHANGELOG.md"
         if not changelog.exists():
             return
         
@@ -122,16 +122,7 @@ class Release:
         if result.returncode != 0:
             print("❌ Build failed!")
             sys.exit(1)
-        
-        # Copy LICENSE to dist folder for users
-        import shutil
-        license_src = self.repo_root / "LICENSE"
-        license_dst = self.repo_root / "dist" / "LICENSE"
-        if license_src.exists():
-            shutil.copy(license_src, license_dst)
-            print(f"   ✓ Copied LICENSE to dist/")
-        else:
-            print(f"   ⚠️  LICENSE file not found")
+
     
     def show_next_steps(self, new_version: str):
         """Show release checklist."""
@@ -142,20 +133,20 @@ class Release:
         print("✓ Version updated in manifest")
         print("✓ Package built and ready in dist/\n")
         
-        print("FILES IN dist/:")
-        print(f"  - rendernames-{new_version}.zip  (the plugin package)")
-        print(f"  - README.txt                   (install instructions)")
-        print(f"  - LICENSE                      (GPL license)\n")
+        print("PACKAGE CONTENTS (inside zip):")
+        print(f"  - rendernames/  (plugin folder)")
+        print(f"  - README.txt    (installation guide)")
+        print(f"  - LICENSE       (GPL-3.0)\n")
         
         print("NEXT STEPS:")
         print(f"1. Test the package in Blender:")
-        print(f"   - Open Blender")
+        print(f"   - Open Blender 4.2+")
         print(f"   - Preferences → Extensions → Install from Disk")
         print(f"   - Select: dist/rendernames-{new_version}.zip")
         print(f"   - Test features thoroughly\n")
         
         print(f"2. Commit changes:")
-        print(f"   git add rendernames/blender_manifest.toml docs/CHANGELOG.md")
+        print(f"   git add rendernames/blender_manifest.toml CHANGELOG.md")
         print(f"   git commit -m \"Release v{new_version}\"\n")
         
         print(f"3. Create and push tag:")
@@ -163,9 +154,9 @@ class Release:
         print(f"   git push origin main")
         print(f"   git push origin v{new_version}\n")
         
-        print(f"4. GitHub will automatically create a release")
-        print(f"   - Find it in: https://github.com/novincode/rendernames/releases")
-        print(f"   - Download dist/rendernames-{new_version}.zip from there\n")
+        print(f"4. GitHub Actions will automatically create a release")
+        print(f"   - It will attach: rendernames-{new_version}.zip")
+        print(f"   - Find it in: https://github.com/novincode/rendernames/releases\n")
         
         print("5. Optional: Submit to Blender extensions marketplace")
         print(f"   - Visit: https://extensions.blender.org/submit/")

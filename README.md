@@ -1,126 +1,232 @@
-# RenderNames - Smart Render Naming for Blender
+# RenderNames
 
-A modern Blender extension (4.2+) that gives you complete control over render output file naming and organization using a flexible template system.
+**Smart render output naming for Blender that actually makes sense.**
+
+Stop manually renaming files. Stop creating folders. Stop losing track of which render is which.
+
+RenderNames gives you **template-based file naming** with live preview, automatic folder organization, and preset management—built right into Blender's Output Properties panel.
+
+---
+
+## Why This Exists
+
+Blender's render output? It's just a text field. No variables, no organization, no help.
+
+You end up with:
+- `untitled.png`, `untitled0001.png`, `final_final_ACTUAL.png`
+- Manual folder creation for every project
+- No consistency across scenes or cameras
+- Constant fear of overwriting your best render
+
+**RenderNames fixes this.** One template, infinite possibilities.
+
+```
+{{blend_file}}/{{date}}/{{scene}}_{{camera}}_
+→ my_project/2025-01-15/Scene_Camera_0001.png
+```
+
+That's it. You set it once, render forever.
+
+---
 
 ## Features
 
-- **Template Variables**: Use `{{scene}}`, `{{camera}}`, `{{date}}`, and many more
-- **Live Preview**: See exactly what your output path will be as you type
-- **Folder Organization**: Automatic folder creation per scene/camera/date
-- **Preset System**: Save, load, import, and export your configurations
-- **Blender Native**: Integrates seamlessly with Output Properties
-- **Non-Destructive**: Enable/disable without losing your settings
+### 🎯 Template System
+Use variables like `{{scene}}`, `{{camera}}`, `{{date}}`, `{{resolution}}` and more. Mix and match however you want.
+
+### 👁️ Live Preview
+See your output path **as you type**. No surprises at render time.
+
+### 📁 Auto Organization
+Enable folder options and RenderNames creates the structure for you—per scene, per camera, per date, whatever you need.
+
+### 💾 Preset System
+Save your favorite setups. Load them instantly. Export and share with your team or across projects.
+
+### 🔧 Blender Native
+Lives in Output Properties where it belongs. Works with **Blender 4.2+** and **Blender 5.0+**. No weird UI, no external apps.
+
+### ⚡ Non-Destructive
+Enable it when you want it. Disable it when you don't. Your settings stay saved either way.
+
+---
 
 ## Installation
 
-See [docs/INSTALL.md](docs/INSTALL.md) for detailed installation instructions.
+### From Releases (recommended)
+1. Download the latest `.zip` from [Releases](https://github.com/novincode/rendernames/releases)
+2. In Blender: `Edit → Preferences → Extensions → Install from Disk`
+3. Select the zip, enable the extension
+4. Done.
 
-**Quick:**
-1. Download latest `.zip` from [Releases](https://github.com/novincode/rendernames/releases)
-2. In Blender 4.2+: Edit → Preferences → Extensions → Install from Disk
-3. Select the zip file, enable it
+### Full Installation Guide
+See [docs/INSTALL.md](docs/INSTALL.md) for detailed setup, troubleshooting, and developer instructions.
 
-## Documentation
-
-- **[Installation Guide](docs/INSTALL.md)** - How to install the extension
-- **[Changelog](docs/CHANGELOG.md)** - Version history and updates
-- **[Architecture](docs/architecture.md)** - Technical documentation
+---
 
 ## Quick Start
 
-1. Go to **Output Properties** panel (printer icon)
-2. Expand the **RenderNames** section
-3. Enable with the checkbox
-4. Edit the template or use a preset
-5. Render!
+1. Open **Output Properties** (printer icon in properties panel)
+2. Find the **RenderNames** section
+3. Click the **Enable** checkbox
+4. Edit the template or pick a preset
+5. Hit render—your files land exactly where the preview says
+
+---
 
 ## Template Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
+Every variable gets replaced when you render:
+
+| Variable | What It Does | Example Output |
+|----------|-------------|----------------|
 | `{{scene}}` | Current scene name | `Scene` |
-| `{{blend_file}}` | Blend file name | `my_project` |
-| `{{frame_start}}` | First frame | `0001` |
-| `{{frame_end}}` | Last frame | `0250` |
-| `{{frame_range}}` | Frame range (RECOMMENDED for videos) | `0001-0250` |
-| `{{date}}` | Current date | `2025-01-15` |
+| `{{blend_file}}` | Your .blend filename | `my_project` |
+| `{{camera}}` | Active camera | `Camera.001` |
+| `{{date}}` | Today's date | `2025-01-15` |
 | `{{time}}` | Current time | `14-30-45` |
-| `{{datetime}}` | Date and time | `2025-01-15_14-30-45` |
-| `{{camera}}` | Active camera name | `Camera` |
-| `{{resolution}}` | Resolution | `1920x1080` |
+| `{{datetime}}` | Date + time | `2025-01-15_14-30-45` |
+| `{{resolution}}` | Render resolution | `1920x1080` |
 | `{{fps}}` | Frame rate | `24` |
 | `{{format}}` | Output format | `png` |
 | `{{engine}}` | Render engine | `cycles` |
 | `{{samples}}` | Sample count | `128` |
+| `{{frame_start}}` | First frame | `0001` |
+| `{{frame_end}}` | Last frame | `0250` |
+| `{{frame_range}}` | Frame range | `0001-0250` |
 
-⚠️ **Important about Frame Numbers:**
-- **For Animations**: Blender automatically adds frame numbers (0001, 0002, etc.) to the end of filenames
+**Note on animations**: Blender automatically adds frame numbers (`0001`, `0002`, etc.) to the end of your filename. For videos, use `{{frame_range}}` to get the full range in the filename.
 
+---
 
 ## Example Templates
 
-**Simple:**
+**Simple** (no folders):
 ```
 {{scene}}_
-→ Scene_0001.exr, Scene_0002.exr (frame numbers added by Blender)
+→ Scene_0001.png, Scene_0002.png, ...
 ```
 
-**Professional:**
+**Professional** (organized):
 ```
-{{blend_file}}/{{date}}/{{scene}}_{{camera}}
+{{blend_file}}/{{date}}/{{scene}}_{{camera}}_
 → my_project/2025-01-15/Scene_Camera_0001.exr
 ```
 
-**Video with Frame Range:**
+**Archival** (timestamped):
+```
+renders/{{datetime}}/{{scene}}_
+→ renders/2025-01-15_14-30-45/Scene_0001.png
+```
+
+**By Camera**:
+```
+{{camera}}/{{scene}}_
+→ Camera.001/Scene_0001.png
+```
+
+**Video with Frame Range**:
 ```
 {{scene}}_{{frame_range}}
 → Scene_0001-0250.mkv
 ```
 
-## Presets
+Mix them however you want. The preview shows you exactly what you'll get.
 
-### Built-in Presets
-- **Simple**: Basic naming without folders
-- **Professional**: Full organization with folders
-- **Archival**: Timestamped for versioning
-- **By Camera**: Organized by camera
-- **Minimal**: Just scene and frame
+---
+
+## Built-in Presets
+
+RenderNames comes with templates ready to use:
+
+- **Simple** — Just scene name, no folders
+- **Professional** — Full organization with date and camera folders
+- **Archival** — Timestamped for version control
+- **By Camera** — Organizes renders by camera name
+- **Minimal** — Bare minimum naming
 
 ### Custom Presets
-- Save your current settings with a name
-- Load presets instantly from the menu
-- Import/Export presets as JSON files
-- Share presets between projects or team members
 
-## Settings
+Save your own:
+1. Set up your template and options
+2. Click "Save Preset"
+3. Give it a name
+4. Load it anytime from the dropdown
 
-### Folder Structure
-- **Blend File Root**: Use blend filename as root folder
-- **Per Scene**: Create subfolder for each scene
-- **Per Camera**: Create subfolder for each camera  
-- **Per Date**: Create subfolder for each render date
+You can also **export presets as JSON files** and share them with teammates or use them across projects.
 
-### Naming Options
-- **Sanitize Names**: Replace special characters with underscores
-- **Lowercase**: Convert everything to lowercase
-- **Frame Padding**: Number of digits for frame numbers (1-8)
+---
+
+## Options
+
+### Folder Organization
+- **Blend File Root** — Use your .blend filename as the base folder
+- **Per Scene** — Subfolder for each scene
+- **Per Camera** — Subfolder for each camera
+- **Per Date** — Subfolder for each render date
+
+### Naming
+- **Sanitize Names** — Replace weird characters with underscores
+- **Lowercase** — Convert everything to lowercase
+- **Frame Padding** — How many digits for frame numbers (1-8)
+
+Everything updates the live preview so you know what you're getting.
+
+---
 
 ## Compatibility
 
-- **Blender 4.2+**: Full support (modern extension system)
-- **Blender 5.0+**: Full support
-- **Earlier versions**: Not supported (requires extension system)
+- ✅ **Blender 4.2+** — Full support
+- ✅ **Blender 5.0+** — Tested and working
+- ❌ **Blender 4.1 and earlier** — Not supported (requires extension system)
 
-## License
+---
 
-GPL-3.0-or-later - Same as Blender
+## Documentation
+
+- **[Installation Guide](docs/INSTALL.md)** — Detailed install instructions for users and developers
+- **[Changelog](CHANGELOG.md)** — Version history and updates
+- **[Architecture](docs/architecture.md)** — Technical documentation for contributors
+- **[Vision](docs/vision.md)** — Design philosophy and goals
+
+---
 
 ## Development
 
-To build the extension:
+Want to contribute or build from source?
+
 ```bash
-python3 scripts/build.py          # Build the plugin
-python3 scripts/build.py release  # Build with release checklist
+# Clone the repo
+git clone https://github.com/novincode/rendernames.git
+cd rendernames
+
+# Build the extension
+python3 scripts/build.py
+
+# Release
+python3 scripts/release.py patch
 ```
 
-See [docs/architecture.md](docs/architecture.md) for technical details.
+Check out the [Installation Guide](docs/INSTALL.md) for developer setup details.
+
+---
+
+## Support & Contributing
+
+Found a bug? Want a feature?
+
+- 🐛 **Bug reports**: [GitHub Issues](https://github.com/novincode/rendernames/issues)
+- 💡 **Feature requests**: [GitHub Discussions](https://github.com/novincode/rendernames/discussions)
+- 🤝 **Pull requests**: Always welcome
+
+If this saves you time, **give it a star ⭐** — it helps others find it.
+
+---
+
+## License
+
+GPL-3.0-or-later — Same license as Blender.
+
+---
+
+**Made by humans who got tired of manually naming render files.**

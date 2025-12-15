@@ -105,12 +105,14 @@ FEATURES:
 DOCUMENTATION:
 https://github.com/novincode/rendernames
 https://github.com/novincode/rendernames/blob/main/docs/INSTALL.md
+https://github.com/novincode/rendernames/blob/main/CHANGELOG.md
 
 IMPORTANT ABOUT ANIMATIONS:
 Blender automatically adds frame numbers to animation outputs.
-Use {{{{frame_range}}}} for video filenames instead of {{{{frame}}}}.
 
 SUPPORT:
+Star: https://github.com/novincode/rendernames/
+Sponsor: https://github.com/sponsors/novincode
 Report issues: https://github.com/novincode/rendernames/issues
 """
         return readme
@@ -129,44 +131,65 @@ Report issues: https://github.com/novincode/rendernames/issues
         # Create dist
         self.dist_dir.mkdir(exist_ok=True)
         
-        # Build zip
+        # Create a staging directory with everything to package
+        print(f"\n📦 Creating package...")
+        staging_dir = self.dist_dir / "rendernames-staging"
+        if staging_dir.exists():
+            shutil.rmtree(staging_dir)
+        staging_dir.mkdir()
+        
+        # Copy the extension folder (exclude __pycache__)
+        src_plugin = self.repo_root / "rendernames"
+        dst_plugin = staging_dir / "rendernames"
+        ignore = shutil.ignore_patterns('__pycache__', '*.pyc')
+        shutil.copytree(src_plugin, dst_plugin, ignore=ignore)
+        
+        # Copy README.txt into staging
+        readme_content = self.create_readme()
+        readme_file = staging_dir / "README.txt"
+        with open(readme_file, "w") as f:
+            f.write(readme_content)
+        
+        # Copy LICENSE into staging
+        license_src = self.repo_root / "LICENSE"
+        if license_src.exists():
+            license_dst = staging_dir / "LICENSE"
+            shutil.copy(license_src, license_dst)
+        
+        # Create zip from staging directory
         zip_name = f"rendernames-{version}"
         zip_path = self.dist_dir / zip_name
         
-        # Remove old
-        if zip_path.exists():
-            shutil.rmtree(zip_path)
-        
-        # Create the archive
-        print(f"\n📦 Creating archive...")
         try:
             shutil.make_archive(
                 str(zip_path),
                 'zip',
-                self.repo_root,
-                'rendernames'
+                staging_dir,
+                '.'
             )
+            
+            # Clean up staging
+            shutil.rmtree(staging_dir)
             
             zip_file = f"{zip_path}.zip"
             size_mb = (self.repo_root / zip_file).stat().st_size / 1024 / 1024
-            
-            # Create separate README file with instructions
-            readme_content = self.create_readme()
-            readme_file = self.dist_dir / "README.txt"
-            with open(readme_file, "w") as f:
-                f.write(readme_content)
             
             print(f"\n{'='*60}")
             print(f"✓ Build Complete!")
             print(f"{'='*60}")
             print(f"\n📦 Package:      {zip_file}")
             print(f"   Size:        {size_mb:.2f} MB")
-            print(f"\n📖 Instructions: {readme_file}")
+            print(f"\nContains:")
+            print(f"   - rendernames/     (plugin folder)")
+            print(f"   - README.txt       (installation guide)")
+            print(f"   - LICENSE          (GPL-3.0)")
             print(f"\n✓ Ready to install in Blender!")
             print(f"{'='*60}\n")
             
         except Exception as e:
             print(f"❌ Build failed: {e}")
+            if staging_dir.exists():
+                shutil.rmtree(staging_dir)
             sys.exit(1)
 
 
