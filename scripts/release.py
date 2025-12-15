@@ -75,10 +75,29 @@ class Release:
             f.write(new_content)
     
     def update_changelog(self, new_version: str):
-        """Add entry to CHANGELOG.md if it exists."""
+        """Prompt for and add changelog entry."""
         changelog = self.repo_root / "docs" / "CHANGELOG.md"
         if not changelog.exists():
             return
+        
+        print("\n📝 Changelog Entry:")
+        print("Enter what changed (press Enter twice to finish):")
+        print("(Leave empty for default)")
+        
+        lines = []
+        while True:
+            line = input()
+            if line == "":
+                if lines and lines[-1] == "":
+                    lines.pop()  # Remove last empty line
+                    break
+                lines.append("")
+            else:
+                lines.append(line)
+        
+        changes = "\n".join(lines).strip()
+        if not changes:
+            changes = "- Updates and improvements"
         
         with open(changelog) as f:
             content = f.read()
@@ -86,12 +105,13 @@ class Release:
         # Add new version at the top if not already present
         if f"## {new_version}" not in content:
             entry = f"""## {new_version}
-- Initial release features
+{changes}
 
 """
             new_content = content.replace("# Changelog\n", f"# Changelog\n\n{entry}", 1)
             with open(changelog, 'w') as f:
                 f.write(new_content)
+            print(f"   ✓ Updated changelog")
     
     def build(self):
         """Call build.py to create package."""
@@ -102,6 +122,16 @@ class Release:
         if result.returncode != 0:
             print("❌ Build failed!")
             sys.exit(1)
+        
+        # Copy LICENSE to dist folder for users
+        import shutil
+        license_src = self.repo_root / "LICENSE"
+        license_dst = self.repo_root / "dist" / "LICENSE"
+        if license_src.exists():
+            shutil.copy(license_src, license_dst)
+            print(f"   ✓ Copied LICENSE to dist/")
+        else:
+            print(f"   ⚠️  LICENSE file not found")
     
     def show_next_steps(self, new_version: str):
         """Show release checklist."""
@@ -111,6 +141,11 @@ class Release:
         
         print("✓ Version updated in manifest")
         print("✓ Package built and ready in dist/\n")
+        
+        print("FILES IN dist/:")
+        print(f"  - rendernames-{new_version}.zip  (the plugin package)")
+        print(f"  - README.txt                   (install instructions)")
+        print(f"  - LICENSE                      (GPL license)\n")
         
         print("NEXT STEPS:")
         print(f"1. Test the package in Blender:")

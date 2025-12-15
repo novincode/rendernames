@@ -4,10 +4,10 @@
 # Modern extension manifest for Blender 4.2+
 # https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html
 
-schema_version = "1.0.0"
+schema_version = "0.1.1"
 
 id = "rendernames"
-version = "0.1.0"
+version = "0.1.1"
 name = "RenderNames"
 tagline = "Smart template-based render file naming and organization"
 maintainer = "Shayan - CodeIdeal"

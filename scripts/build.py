@@ -34,16 +34,19 @@ class Build:
     def check_code(self):
         """Verify Python compiles."""
         print("🔍 Checking code...")
-        result = subprocess.run(
-            ["python3", "-m", "py_compile", "rendernames/*.py"],
-            shell=True,
-            capture_output=True,
-            cwd=self.repo_root
-        )
-        if result.returncode != 0:
-            print(f"❌ Error:\n{result.stderr.decode()}")
-            sys.exit(1)
-        print("   ✓ All Python files compile")
+        rendernames_dir = self.repo_root / "rendernames"
+        py_files = list(rendernames_dir.glob("*.py"))
+        
+        for py_file in py_files:
+            result = subprocess.run(
+                ["python3", "-m", "py_compile", str(py_file)],
+                capture_output=True
+            )
+            if result.returncode != 0:
+                print(f"❌ Error in {py_file.name}:")
+                print(result.stderr.decode())
+                sys.exit(1)
+        print(f"   ✓ All {len(py_files)} Python files compile")
     
     def check_structure(self):
         """Verify required files exist."""

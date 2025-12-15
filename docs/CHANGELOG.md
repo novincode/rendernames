@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+- Updates and improvements
+
+
 All notable changes to RenderNames will be documented in this file.
 
 ## [0.1.0] - 2025-01-15
