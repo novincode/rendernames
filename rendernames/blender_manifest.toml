@@ -4,10 +4,10 @@
 # Modern extension manifest for Blender 4.2+
 # https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html
 
-schema_version = "0.1.1"
+schema_version = "1.0.0"
 
 id = "rendernames"
-version = "0.1.1"
+version = "1.1.0"
 name = "RenderNames"
 tagline = "Smart template-based render file naming and organization"
 maintainer = "Shayan - CodeIdeal"
@@ -22,14 +22,15 @@ license = ["SPDX:GPL-3.0-or-later"]
 copyright = ["2025 Shayan - CodeIdeal"]
 
 # Tags for the extensions platform
-tags = ["Render", "Pipeline", "Import-Export"]
+tags = ["Render", "Pipeline"]
 
 # Website (update when published)
 website = "https://github.com/novincode/rendernames"
 
-# Permissions - we need file access for creating render folders
+# Permissions - we need file access and clipboard access
 [permissions]
 files = "Create render output folders and save preset files"
+clipboard = "Copy template variables and render paths"
 
 # Build configuration
 [build]
