@@ -6,7 +6,9 @@ Simple: Just builds the extension package.
 Usage:
     python3 scripts/build.py
 
-Output: dist/rendernames-X.Y.Z.zip (ready to install in Blender)
+Output: dist/rendernames.zip (ready to install in Blender)
+        - Always named 'rendernames.zip' for consistent GitHub release URLs
+        - Version tracked in blender_manifest.toml
 """
 
 import re
@@ -157,7 +159,8 @@ Report issues: https://github.com/novincode/rendernames/issues
             shutil.copy(license_src, license_dst)
         
         # Create zip from staging directory
-        zip_name = f"rendernames-{version}"
+        # Always use 'rendernames.zip' for consistent GitHub release URLs
+        zip_name = "rendernames"
         zip_path = self.dist_dir / zip_name
         
         try:
