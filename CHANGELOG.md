@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.1.1
+## 1.2.0
+Global / Local Settings Added
+Preset Bugs Fixed
+
+
+## 1.1.0
 - Updates and improvements
 
 
