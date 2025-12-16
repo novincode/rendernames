@@ -37,6 +37,16 @@ class RENDERNAMES_PT_main(Panel):
         # Disable UI if not enabled
         layout.active = props.enabled
         
+        # Settings Scope Toggle (Global vs Per-Scene)
+        row = layout.row(align=True)
+        row.prop(props, "use_global_settings", text="", icon="WORLD" if props.use_global_settings else "SCENE_DATA")
+        if props.use_global_settings:
+            row.label(text="Global Settings (all scenes)")
+        else:
+            row.label(text=f"Local Settings ({scene.name} only)")
+        
+        layout.separator()
+        
         # Template Input
         col = layout.column(align=True)
         col.label(text="Template:", icon="TEXT")

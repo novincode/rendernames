@@ -143,6 +143,10 @@ def extract_preset_data(props) -> Dict[str, Any]:
     }
 
 
+# Flag to prevent update callbacks from overwriting template during preset load
+_applying_preset = False
+
+
 def apply_preset_data(props, data: Dict[str, Any]) -> None:
     """
     Apply preset data to properties.
@@ -151,39 +155,57 @@ def apply_preset_data(props, data: Dict[str, Any]) -> None:
         props: RENDERNAMES_Properties instance
         data: Preset data dict
     """
-    # Handle version upgrades if needed
-    # version = data.get("version", 1)
+    global _applying_preset
     
-    # Apply each property if it exists in the data
-    if "template" in data:
-        props.template = data["template"]
+    # Set flag to prevent update callbacks from overwriting template
+    _applying_preset = True
     
-    if "use_base_path" in data:
-        props.use_base_path = data["use_base_path"]
+    try:
+        # Handle version upgrades if needed
+        # version = data.get("version", 1)
+        
+        # Apply folder structure options FIRST (these have update callbacks)
+        # but the flag prevents them from overwriting the template
+        if "folder_per_scene" in data:
+            props.folder_per_scene = data["folder_per_scene"]
+        
+        if "folder_per_camera" in data:
+            props.folder_per_camera = data["folder_per_camera"]
+        
+        if "folder_per_date" in data:
+            props.folder_per_date = data["folder_per_date"]
+        
+        if "use_blend_root" in data:
+            props.use_blend_root = data["use_blend_root"]
+        
+        # Apply other options
+        if "use_base_path" in data:
+            props.use_base_path = data["use_base_path"]
+        
+        if "base_path" in data:
+            props.base_path = data["base_path"]
+        
+        if "sanitize_names" in data:
+            props.sanitize_names = data["sanitize_names"]
+        
+        if "lowercase" in data:
+            props.lowercase = data["lowercase"]
+        
+        if "frame_padding" in data:
+            props.frame_padding = data["frame_padding"]
+        
+        # Apply template LAST to ensure it's not overwritten
+        if "template" in data:
+            props.template = data["template"]
     
-    if "base_path" in data:
-        props.base_path = data["base_path"]
-    
-    if "folder_per_scene" in data:
-        props.folder_per_scene = data["folder_per_scene"]
-    
-    if "folder_per_camera" in data:
-        props.folder_per_camera = data["folder_per_camera"]
-    
-    if "folder_per_date" in data:
-        props.folder_per_date = data["folder_per_date"]
-    
-    if "use_blend_root" in data:
-        props.use_blend_root = data["use_blend_root"]
-    
-    if "sanitize_names" in data:
-        props.sanitize_names = data["sanitize_names"]
-    
-    if "lowercase" in data:
-        props.lowercase = data["lowercase"]
-    
-    if "frame_padding" in data:
-        props.frame_padding = data["frame_padding"]
+    finally:
+        # Always reset the flag
+        _applying_preset = False
+
+
+def is_applying_preset() -> bool:
+    """Check if we're currently applying a preset (for update callbacks)."""
+    return _applying_preset
 
 
 # ============================================================================

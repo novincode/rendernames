@@ -2,7 +2,7 @@
 # RenderNames - Properties
 # ============================================================================
 # All property definitions for the extension
-# Properties are stored per-scene and automatically saved with .blend files
+# Properties can be stored per-scene or globally (shared across all scenes)
 
 import bpy
 from bpy.props import (
@@ -11,6 +11,7 @@ from bpy.props import (
     IntProperty,
     EnumProperty,
     CollectionProperty,
+    PointerProperty,
 )
 from bpy.types import PropertyGroup
 
@@ -40,6 +41,16 @@ class RENDERNAMES_Properties(PropertyGroup):
     )
     
     # -------------------------------------------------------------------------
+    # Storage Mode (Global vs Per-Scene)
+    # -------------------------------------------------------------------------
+    use_global_settings: BoolProperty(
+        name="Use Global Settings",
+        description="Share settings across all scenes. When off, each scene has its own settings",
+        default=True,
+        update=lambda self, ctx: _on_storage_mode_changed(self, ctx),
+    )
+    
+    # -------------------------------------------------------------------------
     # Template System
     # -------------------------------------------------------------------------
     template: StringProperty(
@@ -54,12 +65,14 @@ class RENDERNAMES_Properties(PropertyGroup):
         description="Base directory for renders (leave empty to use Blender's output path)",
         default="",
         subtype="DIR_PATH",
+        update=lambda self, ctx: _on_setting_changed(self, ctx),
     )
     
     use_base_path: BoolProperty(
         name="Use Custom Base Path",
         description="Use custom base path instead of Blender's output path",
         default=False,
+        update=lambda self, ctx: _on_setting_changed(self, ctx),
     )
     
     # -------------------------------------------------------------------------
@@ -100,12 +113,14 @@ class RENDERNAMES_Properties(PropertyGroup):
         name="Sanitize Names",
         description="Replace special characters and spaces with underscores",
         default=True,
+        update=lambda self, ctx: _on_setting_changed(self, ctx),
     )
     
     lowercase: BoolProperty(
         name="Lowercase",
         description="Convert all text to lowercase",
         default=False,
+        update=lambda self, ctx: _on_setting_changed(self, ctx),
     )
     
     frame_padding: IntProperty(
@@ -114,6 +129,7 @@ class RENDERNAMES_Properties(PropertyGroup):
         default=4,
         min=1,
         max=8,
+        update=lambda self, ctx: _on_setting_changed(self, ctx),
     )
     
     # -------------------------------------------------------------------------
@@ -173,8 +189,42 @@ class RENDERNAMES_Properties(PropertyGroup):
 # Update Callbacks
 # ============================================================================
 
+def _on_setting_changed(props, context):
+    """Called when any synced setting changes. Syncs to global if in global mode."""
+    from . import presets
+    
+    # If using global settings and not applying a preset, sync to global
+    if props.use_global_settings and not presets.is_applying_preset():
+        _save_to_global_settings(context)
+
+
+def _update_preview(props, context):
+    """Update the live preview when template changes."""
+    # Import here to avoid circular imports
+    from . import template_engine
+    from . import presets
+    
+    if context.scene:
+        preview_path = template_engine.render_template(
+            props.template,
+            context.scene,
+            props,
+        )
+        props["preview"] = preview_path
+        
+        # If using global settings and not applying a preset, sync to global
+        if props.use_global_settings and not presets.is_applying_preset():
+            _save_to_global_settings(context)
+            # Sync to other scenes in background (will happen on scene switch via timer)
+
+
 def _sync_template_from_options(props, context):
     """Build template path from folder structure checkboxes."""
+    # Don't overwrite template while applying a preset
+    from . import presets
+    if presets.is_applying_preset():
+        return
+    
     parts = []
     
     # Root folder
@@ -200,22 +250,134 @@ def _sync_template_from_options(props, context):
     # Build path
     props.template = "/".join(parts)
     
-    # Update preview
+    # Update preview (this also handles global sync)
     _update_preview(props, context)
 
 
-def _update_preview(props, context):
-    """Update the live preview when template changes."""
-    # Import here to avoid circular imports
-    from . import template_engine
+def _on_storage_mode_changed(props, context):
+    """Called when use_global_settings toggle changes."""
+    if props.use_global_settings:
+        # Switching to global mode - copy current scene settings to global
+        _save_to_global_settings(context)
+    else:
+        # Switching to local mode - settings stay as-is for this scene
+        pass
+
+
+# ============================================================================
+# Global Settings Helpers
+# ============================================================================
+
+# Properties to sync between global and local settings
+_SYNC_PROPERTIES = [
+    "enabled",
+    "template",
+    "base_path",
+    "use_base_path",
+    "folder_per_scene",
+    "folder_per_camera",
+    "folder_per_date",
+    "use_blend_root",
+    "sanitize_names",
+    "lowercase",
+    "frame_padding",
+    "include_extension",
+]
+
+
+def _get_global_storage():
+    """Get the global storage dictionary, creating it if needed."""
+    # Store in the first scene's custom properties as a reference point
+    # This persists with the .blend file
+    wm = bpy.context.window_manager
+    if not hasattr(wm, "_rendernames_global"):
+        wm["_rendernames_global"] = {}
+    return wm.get("_rendernames_global", {})
+
+
+def _set_global_storage(data):
+    """Set the global storage dictionary."""
+    wm = bpy.context.window_manager
+    wm["_rendernames_global"] = data
+
+
+def _save_to_global_settings(context):
+    """Save current scene's settings to global storage."""
+    if not context.scene or not hasattr(context.scene, "rendernames"):
+        return
     
-    if context.scene:
-        preview_path = template_engine.render_template(
-            props.template,
-            context.scene,
-            props,
-        )
-        props["preview"] = preview_path
+    props = context.scene.rendernames
+    data = {}
+    
+    for prop_name in _SYNC_PROPERTIES:
+        if hasattr(props, prop_name):
+            data[prop_name] = getattr(props, prop_name)
+    
+    _set_global_storage(data)
+
+
+def _load_from_global_settings(context):
+    """Load settings from global storage to current scene."""
+    if not context.scene or not hasattr(context.scene, "rendernames"):
+        return
+    
+    props = context.scene.rendernames
+    data = _get_global_storage()
+    
+    if not data:
+        return
+    
+    # Use the preset flag to prevent update callbacks from interfering
+    from . import presets
+    
+    # Temporarily set the flag
+    original_flag = presets._applying_preset
+    presets._applying_preset = True
+    
+    try:
+        for prop_name in _SYNC_PROPERTIES:
+            if prop_name in data and hasattr(props, prop_name):
+                setattr(props, prop_name, data[prop_name])
+    finally:
+        presets._applying_preset = original_flag
+
+
+def sync_global_settings_to_all_scenes():
+    """Sync global settings to all scenes that use global mode."""
+    data = _get_global_storage()
+    if not data:
+        return
+    
+    from . import presets
+    
+    for scene in bpy.data.scenes:
+        if not hasattr(scene, "rendernames"):
+            continue
+        
+        props = scene.rendernames
+        if not props.use_global_settings:
+            continue
+        
+        # Temporarily set the flag
+        original_flag = presets._applying_preset
+        presets._applying_preset = True
+        
+        try:
+            for prop_name in _SYNC_PROPERTIES:
+                if prop_name in data and hasattr(props, prop_name):
+                    setattr(props, prop_name, data[prop_name])
+        finally:
+            presets._applying_preset = original_flag
+
+
+def get_effective_props(scene):
+    """
+    Get the effective properties for a scene.
+    
+    Returns the scene's own properties - the global sync happens
+    automatically via handlers.
+    """
+    return scene.rendernames
 
 
 # ============================================================================

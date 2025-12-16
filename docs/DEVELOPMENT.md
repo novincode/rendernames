@@ -85,13 +85,17 @@ Before release:
 - [ ] Save/load user preset
 - [ ] Load built-in presets
 - [ ] Import/export preset
-- [ ] Delete preset
+- [ ] Delete preset from menu (X button)
 - [ ] Render still image
 - [ ] Render animation
 - [ ] Test with unsaved blend file
 - [ ] Test folder creation
 - [ ] Test overwrite scenario
 - [ ] Verify settings persist after restart
+- [ ] Test Global Settings mode (settings shared across scenes)
+- [ ] Test Local Settings mode (per-scene settings)
+- [ ] Switch scenes with Global mode - verify sync
+- [ ] Test preset with templates containing slashes (e.g., "Folder/{{scene}}")
 - [ ] Test on Blender 4.2
 - [ ] Test on Blender 5.0+
 

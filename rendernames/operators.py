@@ -433,8 +433,12 @@ class RENDERNAMES_MT_presets(bpy.types.Menu):
         if user_presets:
             layout.label(text="User Presets", icon="USER")
             for name in user_presets:
-                row = layout.row()
+                row = layout.row(align=True)
+                # Load button
                 op = row.operator("rendernames.load_preset", text=name)
+                op.preset_name = name
+                # Delete button
+                op = row.operator("rendernames.delete_preset", text="", icon="X")
                 op.preset_name = name
         else:
             layout.label(text="No user presets", icon="INFO")
