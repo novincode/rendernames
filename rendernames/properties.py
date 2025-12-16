@@ -28,6 +28,24 @@ class RENDERNAMES_PresetItem(PropertyGroup):
     )
 
 
+class RENDERNAMES_GlobalSettings(PropertyGroup):
+    """Global settings stored on WindowManager - single source of truth for global mode."""
+    
+    # Copy of all synced properties
+    enabled: BoolProperty(default=True)
+    template: StringProperty(default="{{scene}}_")
+    base_path: StringProperty(default="")
+    use_base_path: BoolProperty(default=False)
+    folder_per_scene: BoolProperty(default=False)
+    folder_per_camera: BoolProperty(default=False)
+    folder_per_date: BoolProperty(default=False)
+    use_blend_root: BoolProperty(default=False)
+    sanitize_names: BoolProperty(default=True)
+    lowercase: BoolProperty(default=False)
+    frame_padding: IntProperty(default=4, min=1, max=8)
+    include_extension: BoolProperty(default=True)
+
+
 class RENDERNAMES_Properties(PropertyGroup):
     """Main property group for RenderNames settings."""
     
@@ -190,12 +208,24 @@ class RENDERNAMES_Properties(PropertyGroup):
 # ============================================================================
 
 def _on_setting_changed(props, context):
-    """Called when any synced setting changes. Syncs to global if in global mode."""
+    """Called when any synced setting changes. Syncs to global and other scenes if in global mode."""
     from . import presets
     
-    # If using global settings and not applying a preset, sync to global
-    if props.use_global_settings and not presets.is_applying_preset():
-        _save_to_global_settings(context)
+    # Don't sync while applying a preset
+    if presets.is_applying_preset():
+        return
+    
+    if not props.use_global_settings:
+        return
+    
+    if context is None or context.scene is None:
+        return
+    
+    # Update the global storage on WindowManager
+    _save_to_global_settings(context)
+    
+    # IMMEDIATELY sync to all other scenes in global mode
+    _sync_global_to_all_scenes(context)
 
 
 def _update_preview(props, context):
@@ -212,10 +242,10 @@ def _update_preview(props, context):
         )
         props["preview"] = preview_path
         
-        # If using global settings and not applying a preset, sync to global
+        # If using global settings and not applying a preset, sync to global and other scenes
         if props.use_global_settings and not presets.is_applying_preset():
             _save_to_global_settings(context)
-            # Sync to other scenes in background (will happen on scene switch via timer)
+            _sync_global_to_all_scenes(context)
 
 
 def _sync_template_from_options(props, context):
@@ -285,67 +315,63 @@ _SYNC_PROPERTIES = [
 ]
 
 
-def _get_global_storage():
-    """Get the global storage dictionary, creating it if needed."""
-    # Store in the first scene's custom properties as a reference point
-    # This persists with the .blend file
-    wm = bpy.context.window_manager
-    if not hasattr(wm, "_rendernames_global"):
-        wm["_rendernames_global"] = {}
-    return wm.get("_rendernames_global", {})
-
-
-def _set_global_storage(data):
-    """Set the global storage dictionary."""
-    wm = bpy.context.window_manager
-    wm["_rendernames_global"] = data
+def _get_global_settings(context):
+    """Get the global settings property group from WindowManager."""
+    try:
+        wm = context.window_manager
+        if not hasattr(wm, "rendernames_global"):
+            wm.rendernames_global = bpy.props.PointerProperty(type=RENDERNAMES_GlobalSettings)
+        return wm.rendernames_global
+    except Exception:
+        return None
 
 
 def _save_to_global_settings(context):
-    """Save current scene's settings to global storage."""
+    """Save current scene's settings to the global storage on WindowManager."""
     if not context.scene or not hasattr(context.scene, "rendernames"):
         return
     
-    props = context.scene.rendernames
-    data = {}
+    scene_props = context.scene.rendernames
+    global_props = _get_global_settings(context)
     
+    if global_props is None:
+        return
+    
+    # Copy all synced properties from scene to global
     for prop_name in _SYNC_PROPERTIES:
-        if hasattr(props, prop_name):
-            data[prop_name] = getattr(props, prop_name)
-    
-    _set_global_storage(data)
+        if hasattr(scene_props, prop_name):
+            value = getattr(scene_props, prop_name)
+            if hasattr(global_props, prop_name):
+                setattr(global_props, prop_name, value)
 
 
-def _load_from_global_settings(context):
-    """Load settings from global storage to current scene."""
-    if not context.scene or not hasattr(context.scene, "rendernames"):
+def _load_from_global_settings(context, target_props):
+    """Load settings from global storage to a scene's properties."""
+    if not context.scene:
         return
     
-    props = context.scene.rendernames
-    data = _get_global_storage()
-    
-    if not data:
+    global_props = _get_global_settings(context)
+    if global_props is None:
         return
     
-    # Use the preset flag to prevent update callbacks from interfering
+    # Use the preset flag to prevent update callbacks
     from . import presets
-    
-    # Temporarily set the flag
     original_flag = presets._applying_preset
     presets._applying_preset = True
     
     try:
         for prop_name in _SYNC_PROPERTIES:
-            if prop_name in data and hasattr(props, prop_name):
-                setattr(props, prop_name, data[prop_name])
+            if hasattr(global_props, prop_name) and hasattr(target_props, prop_name):
+                value = getattr(global_props, prop_name)
+                setattr(target_props, prop_name, value)
     finally:
         presets._applying_preset = original_flag
 
 
-def sync_global_settings_to_all_scenes():
-    """Sync global settings to all scenes that use global mode."""
-    data = _get_global_storage()
-    if not data:
+def _sync_global_to_all_scenes(context):
+    """IMMEDIATELY sync global settings to all scenes that use global mode."""
+    global_props = _get_global_settings(context)
+    if global_props is None:
         return
     
     from . import presets
@@ -354,8 +380,14 @@ def sync_global_settings_to_all_scenes():
         if not hasattr(scene, "rendernames"):
             continue
         
-        props = scene.rendernames
-        if not props.use_global_settings:
+        scene_props = scene.rendernames
+        
+        # Skip scenes not in global mode
+        if not scene_props.use_global_settings:
+            continue
+        
+        # Skip the current scene (already updated)
+        if scene == context.scene:
             continue
         
         # Temporarily set the flag
@@ -363,20 +395,17 @@ def sync_global_settings_to_all_scenes():
         presets._applying_preset = True
         
         try:
+            # Copy all synced properties from global to this scene
             for prop_name in _SYNC_PROPERTIES:
-                if prop_name in data and hasattr(props, prop_name):
-                    setattr(props, prop_name, data[prop_name])
+                if hasattr(global_props, prop_name) and hasattr(scene_props, prop_name):
+                    value = getattr(global_props, prop_name)
+                    setattr(scene_props, prop_name, value)
         finally:
             presets._applying_preset = original_flag
 
 
 def get_effective_props(scene):
-    """
-    Get the effective properties for a scene.
-    
-    Returns the scene's own properties - the global sync happens
-    automatically via handlers.
-    """
+    """Get the effective properties for a scene."""
     return scene.rendernames
 
 
@@ -386,6 +415,7 @@ def get_effective_props(scene):
 
 _classes = (
     RENDERNAMES_PresetItem,
+    RENDERNAMES_GlobalSettings,
     RENDERNAMES_Properties,
 )
 
@@ -395,7 +425,12 @@ def register():
     for cls in _classes:
         bpy.utils.register_class(cls)
     
-    # Attach to Scene type - settings persist with .blend file
+    # Attach global settings to WindowManager - session-persistent
+    bpy.types.WindowManager.rendernames_global = bpy.props.PointerProperty(
+        type=RENDERNAMES_GlobalSettings,
+    )
+    
+    # Attach per-scene settings to Scene
     bpy.types.Scene.rendernames = bpy.props.PointerProperty(
         type=RENDERNAMES_Properties,
     )
@@ -403,7 +438,11 @@ def register():
 
 def unregister():
     """Unregister property classes."""
-    # Remove from Scene type
+    # Remove from WindowManager
+    if hasattr(bpy.types.WindowManager, "rendernames_global"):
+        del bpy.types.WindowManager.rendernames_global
+    
+    # Remove from Scene
     if hasattr(bpy.types.Scene, "rendernames"):
         del bpy.types.Scene.rendernames
     

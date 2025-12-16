@@ -130,7 +130,7 @@ def on_load_post(dummy):
     Called after a .blend file is loaded.
     
     Clean up any stored paths and refresh presets.
-    Initialize global settings from the first scene that uses global mode.
+    Initialize global settings from the first global-mode scene.
     """
     first_global_scene = None
     
@@ -149,42 +149,32 @@ def on_load_post(dummy):
     # Initialize global storage from the first global scene
     if first_global_scene is not None:
         from . import properties
-        # Create a mock context with the first global scene
+        # Create a mock context
         class MockContext:
             scene = first_global_scene
-        properties._save_to_global_settings(MockContext())
+            window_manager = bpy.context.window_manager if bpy.context else None
+        
+        if MockContext.window_manager:
+            properties._save_to_global_settings(MockContext())
 
 
 # ============================================================================
-# Timer for Preview Updates and Global Settings Sync
+# Timer for Preview Updates
 # ============================================================================
-
-_last_scene_name = None
-
 
 def _preview_timer():
     """
-    Timer function for periodic preview updates and global settings sync.
+    Timer function for periodic preview updates.
+    Global sync happens immediately via update callbacks, so this is just for preview.
     """
-    global _last_scene_name
-    
     try:
         context = bpy.context
         if context and context.scene and hasattr(context.scene, "rendernames"):
             props = context.scene.rendernames
             
-            # Check if we switched scenes
-            current_scene_name = context.scene.name
-            scene_changed = (_last_scene_name != current_scene_name)
-            _last_scene_name = current_scene_name
-            
-            # If scene changed and using global settings, sync from global
-            if scene_changed and props.use_global_settings:
-                from . import properties
-                properties._load_from_global_settings(context)
-            
             # Update preview
             if props.enabled and props.template:
+                from . import template_engine
                 preview = template_engine.render_template(
                     props.template,
                     context.scene,
