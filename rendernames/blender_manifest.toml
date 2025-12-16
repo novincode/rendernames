@@ -7,7 +7,7 @@
 schema_version = "1.0.0"
 
 id = "rendernames"
-version = "1.2.0"
+version = "1.2.1"
 name = "RenderNames"
 tagline = "Smart template-based render file naming and organization"
 maintainer = "Shayan - CodeIdeal"

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+- Updates and improvements
+
+
 ## 1.2.0
 Global / Local Settings Added
 Preset Bugs Fixed
