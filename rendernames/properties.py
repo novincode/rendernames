@@ -250,10 +250,10 @@ def _update_preview(props, context):
 
 def _sync_template_from_options(props, context):
     """Build template path from folder structure checkboxes."""
-    # Don't overwrite template while applying a preset
+    # Don't overwrite template while applying a preset - return EARLY and SKIP EVERYTHING
     from . import presets
     if presets.is_applying_preset():
-        return
+        return  # Exit completely, don't modify anything
     
     parts = []
     
@@ -278,10 +278,13 @@ def _sync_template_from_options(props, context):
         parts.append("")
     
     # Build path
-    props.template = "/".join(parts)
+    new_template = "/".join(parts)
     
-    # Update preview (this also handles global sync)
-    _update_preview(props, context)
+    # Only update if actually changed
+    if props.template != new_template:
+        props.template = new_template
+        # Update preview ONLY if template actually changed
+        _update_preview(props, context)
 
 
 def _on_storage_mode_changed(props, context):

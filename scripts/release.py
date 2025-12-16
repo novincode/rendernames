@@ -60,15 +60,18 @@ class Release:
         return f"{major}.{minor}.{patch}"
     
     def update_manifest(self, new_version: str):
-        """Update version in manifest."""
+        """Update version in manifest (only the package version, not schema_version)."""
         with open(self.manifest) as f:
             content = f.read()
         
-        old_pattern = r'version = "[^"]+"'
+        # Only match 'version = ' that's NOT preceded by 'schema_'
+        # Use a pattern that matches version on its own line (not schema_version)
+        old_pattern = r'^version = "[^"]+"'
         new_content = re.sub(
             old_pattern,
             f'version = "{new_version}"',
-            content
+            content,
+            flags=re.MULTILINE
         )
         
         with open(self.manifest, 'w') as f:

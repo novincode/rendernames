@@ -157,6 +157,9 @@ def apply_preset_data(props, data: Dict[str, Any]) -> None:
     """
     global _applying_preset
     
+    # Save the template to reapply it if needed
+    template_to_apply = data.get("template", "")
+    
     # Set flag to prevent update callbacks from overwriting template
     _applying_preset = True
     
@@ -195,11 +198,15 @@ def apply_preset_data(props, data: Dict[str, Any]) -> None:
             props.frame_padding = data["frame_padding"]
         
         # Apply template LAST to ensure it's not overwritten
-        if "template" in data:
-            props.template = data["template"]
+        # Use direct assignment to bypass any intermediate updates
+        if template_to_apply:
+            props.template = template_to_apply
+            # Verify it stuck - if folder options changed it, reapply
+            if props.template != template_to_apply:
+                props.template = template_to_apply
     
     finally:
-        # Always reset the flag
+        # Reset the flag AFTER everything is applied
         _applying_preset = False
 
 

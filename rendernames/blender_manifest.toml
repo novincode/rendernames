@@ -4,7 +4,7 @@
 # Modern extension manifest for Blender 4.2+
 # https://docs.blender.org/manual/en/latest/advanced/extensions/getting_started.html
 
-schema_version = "1.2.0"
+schema_version = "1.0.0"
 
 id = "rendernames"
 version = "1.2.0"
