@@ -39,32 +39,19 @@ def on_render_init(scene):
         # Store original path ONLY on first render_init call
         if "_rendernames_original_filepath" not in scene:
             scene["_rendernames_original_filepath"] = scene.render.filepath
-        
-        # Get base path
-        if props.use_base_path and props.base_path:
-            base_path = props.base_path
-        else:
-            base_path = "//"
-        
-        # Render the template
-        rendered = template_engine.render_template(
-            props.template,
-            scene,
-            props,
-        )
-        
-        # Build full path
-        if base_path.endswith("/"):
-            full_path = base_path + rendered
-        else:
-            full_path = base_path + "/" + rendered
-        
+
+        # Build the full path using the same logic as the live preview, so
+        # frames are written exactly where the preview said they would be.
+        # NOTE: resolve_base_path reads scene.render.filepath, so it must run
+        # BEFORE we overwrite it below.
+        full_path = template_engine.build_render_path(scene, props)
+
         # Create directories
         abs_path = bpy.path.abspath(full_path)
         dir_path = os.path.dirname(abs_path)
         if dir_path and not os.path.exists(dir_path):
             os.makedirs(dir_path, exist_ok=True)
-        
+
         # Apply to render
         scene.render.filepath = full_path
         print(f"RenderNames: Set render path to: {full_path}")

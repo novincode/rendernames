@@ -7,7 +7,7 @@
 import re
 import os
 from datetime import datetime
-from typing import Dict, Callable, Optional, Any
+from typing import Dict, Callable, Any
 
 import bpy
 
@@ -239,36 +239,51 @@ def sanitize_string(value: str) -> str:
     return result
 
 
-def get_full_render_path(
-    scene: bpy.types.Scene,
-    props: Any,
-    base_path: Optional[str] = None,
-) -> str:
+def resolve_base_path(scene: bpy.types.Scene, props: Any) -> str:
     """
-    Get the full render output path including the rendered template.
-    
-    Args:
-        scene: The Blender scene
-        props: RenderNames properties
-        base_path: Optional base path (defaults to //renders/)
-        
-    Returns:
-        Absolute path for render output
+    Determine the base directory the rendered template is composed onto.
+
+    This is the single source of truth used by the live preview, the
+    "Apply" operator and the render-time handler, so what the user sees in
+    the preview is exactly where frames are written.
+
+    - If a custom base path is set, use it verbatim.
+    - Otherwise compose onto the *directory* of Blender's own Output path
+      (``scene.render.filepath``). Using ``dirname`` strips any previously
+      applied filename so the result is stable across repeated renders.
+    - As a last resort (no output path set at all) fall back to ``//``,
+      the .blend file's directory.
     """
-    if base_path is None:
-        # Use relative path from .blend file location
-        base_path = "//renders/"
-    
-    # Render the template
+    if getattr(props, "use_base_path", False) and props.base_path:
+        return props.base_path
+
+    existing = scene.render.filepath
+    if existing:
+        base = os.path.dirname(existing)
+        if base:
+            return base
+
+    return "//"
+
+
+def join_base_and_name(base: str, name: str) -> str:
+    """Join a base directory and a rendered name with a single separator."""
+    if base.endswith("/") or base.endswith("\\"):
+        return base + name
+    return base + "/" + name
+
+
+def build_render_path(scene: bpy.types.Scene, props: Any) -> str:
+    """
+    Build the full render filepath: base directory + rendered template.
+
+    The returned value may be a relative Blender path (e.g. starting with
+    ``//``); callers that need an absolute path should pass it through
+    ``bpy.path.abspath``.
+    """
+    base = resolve_base_path(scene, props)
     rendered = render_template(props.template, scene, props)
-    
-    # Combine paths
-    full_path = os.path.join(base_path, rendered)
-    
-    # Make absolute
-    full_path = bpy.path.abspath(full_path)
-    
-    return full_path
+    return join_base_and_name(base, rendered)
 
 
 # ============================================================================

@@ -4,8 +4,6 @@
 # UI Panel definitions - appears in Output Properties
 # Clean, Blender-native look with progressive disclosure
 
-import os
-
 import bpy
 from bpy.types import Panel
 
@@ -78,29 +76,9 @@ class RENDERNAMES_PT_main(Panel):
         box = col.box()
         box.scale_y = 1.0
         
-        # Calculate preview
+        # Calculate preview - identical logic to the render-time handler
         if props.template:
-            # Get base path for preview
-            if props.use_base_path and props.base_path:
-                base = props.base_path
-            else:
-                existing = scene.render.filepath
-                if existing:
-                    base = os.path.dirname(existing) or "//"
-                else:
-                    base = "//"
-            
-            rendered = template_engine.render_template(
-                props.template,
-                scene,
-                props,
-            )
-            
-            # Combine for full preview
-            if base.endswith("/"):
-                preview = base + rendered
-            else:
-                preview = base + "/" + rendered
+            preview = template_engine.build_render_path(scene, props)
         else:
             preview = "(empty template)"
         

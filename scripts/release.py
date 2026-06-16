@@ -145,7 +145,7 @@ class Release:
         print(f"1. Test the package in Blender:")
         print(f"   - Open Blender 4.2+")
         print(f"   - Preferences → Extensions → Install from Disk")
-        print(f"   - Select: dist/rendernames-{new_version}.zip")
+        print(f"   - Select: dist/rendernames.zip")
         print(f"   - Test features thoroughly\n")
         
         print(f"2. Commit changes:")
@@ -158,12 +158,12 @@ class Release:
         print(f"   git push origin v{new_version}\n")
         
         print(f"4. GitHub Actions will automatically create a release")
-        print(f"   - It will attach: rendernames-{new_version}.zip")
+        print(f"   - It will attach: rendernames.zip")
         print(f"   - Find it in: https://github.com/novincode/rendernames/releases\n")
-        
+
         print("5. Optional: Submit to Blender extensions marketplace")
         print(f"   - Visit: https://extensions.blender.org/submit/")
-        print(f"   - Upload the dist/rendernames-{new_version}.zip file\n")
+        print(f"   - Upload the dist/rendernames.zip file\n")
         
         print(f"{'='*60}\n")
     

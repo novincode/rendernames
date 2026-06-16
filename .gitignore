@@ -59,3 +59,6 @@ renders/
 # Local development
 .local/
 *.log
+
+
+.claude

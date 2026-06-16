@@ -138,33 +138,13 @@ class RENDERNAMES_OT_copy_preview(Operator):
         if not props.template:
             self.report({"WARNING"}, "Template is empty")
             return {"FINISHED"}
-        
-        # Compute the full path (same as in panel)
-        if props.use_base_path and props.base_path:
-            base = props.base_path
-        else:
-            existing = scene.render.filepath
-            if existing:
-                base = os.path.dirname(existing) or "//"
-            else:
-                base = "//"
-        
-        from . import template_engine
-        rendered = template_engine.render_template(
-            props.template,
-            scene,
-            props,
-        )
-        
-        # Combine for full path
-        if base.endswith("/"):
-            full_path = base + rendered
-        else:
-            full_path = base + "/" + rendered
-        
+
+        # Build the full path using the shared logic (same as preview/render)
+        full_path = template_engine.build_render_path(scene, props)
+
         # Convert to absolute path for clipboard
         abs_path = bpy.path.abspath(full_path)
-        
+
         context.window_manager.clipboard = abs_path
         self.report({"INFO"}, f"Copied: {abs_path}")
         return {"FINISHED"}
@@ -183,18 +163,19 @@ class RENDERNAMES_OT_apply_to_render(Operator):
         if not props.enabled:
             self.report({"WARNING"}, "RenderNames is disabled")
             return {"CANCELLED"}
-        
-        # Get the rendered path
-        rendered = template_engine.render_template(
-            props.template,
-            scene,
-            props,
-        )
-        
+
+        if not props.template:
+            self.report({"WARNING"}, "Template is empty")
+            return {"CANCELLED"}
+
+        # Build the full path using the shared logic (same as preview/render),
+        # composing onto the custom base path or Blender's own Output folder.
+        full_path = template_engine.build_render_path(scene, props)
+
         # Apply to render settings
-        scene.render.filepath = f"//renders/{rendered}"
-        
-        self.report({"INFO"}, f"Render path set to: {rendered}")
+        scene.render.filepath = full_path
+
+        self.report({"INFO"}, f"Render path set to: {full_path}")
         return {"FINISHED"}
 
 

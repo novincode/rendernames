@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.2
+- Fixed: render output going next to the .blend file instead of the configured Output path when "Custom Base Path" was off (Blender 4.5.x). The render-time path now matches the live preview exactly.
+- Path building is now centralized in one place (preview, "Apply", clipboard copy and render all use identical logic), so the preview is always an accurate reflection of where frames are written.
+
 ## 1.2.1
 - Updates and improvements
 

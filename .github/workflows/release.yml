@@ -25,7 +25,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/rendernames-*.zip
+          files: dist/rendernames.zip
           draft: false
           prerelease: false
         env:
